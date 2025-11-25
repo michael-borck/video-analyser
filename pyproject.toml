@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "video-lens"
-version = "0.5.0"
+version = "0.5.17"
 description = "Video analysis lens for the modular assessment platform - extracts frames, transcripts, and quality metrics"
 authors = [{name = "Michael Borck", email = "michael@example.com"}]
 readme = "README.md"

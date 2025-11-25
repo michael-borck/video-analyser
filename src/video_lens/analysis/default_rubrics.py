@@ -82,13 +82,14 @@ def create_academic_presentation_rubric() -> Rubric:
     # Set custom scoring scale
     builder.set_scoring_scale(
         min_score=1,
-        max_score=5,
+        max_score=100,
         labels={
             1: "Poor - Needs significant improvement",
-            2: "Below Average - Notable deficiencies",
-            3: "Average - Meets basic expectations",
-            4: "Good - Exceeds expectations",
-            5: "Excellent - Outstanding work",
+            20: "Below Average - Notable deficiencies",
+            40: "Average - Meets basic expectations",
+            60: "Good - Exceeds expectations",
+            80: "Very Good - Strong performance",
+            100: "Excellent - Outstanding work",
         },
     )
 
@@ -173,13 +174,14 @@ def create_business_pitch_rubric() -> Rubric:
 
     builder.set_scoring_scale(
         min_score=1,
-        max_score=5,
+        max_score=100,
         labels={
             1: "Poor - Not investment-ready",
-            2: "Below Average - Significant concerns",
-            3: "Average - Interesting but needs work",
-            4: "Good - Strong pitch",
-            5: "Excellent - Ready to pitch to investors",
+            20: "Below Average - Significant concerns",
+            40: "Average - Interesting but needs work",
+            60: "Good - Strong pitch",
+            80: "Very Good - Compelling investment opportunity",
+            100: "Excellent - Ready to pitch to investors",
         },
     )
 
@@ -266,17 +268,657 @@ def create_teaching_demo_rubric() -> Rubric:
 
     builder.set_scoring_scale(
         min_score=1,
-        max_score=5,
+        max_score=100,
         labels={
             1: "Poor - Not effective teaching",
-            2: "Below Average - Needs improvement",
-            3: "Average - Meets basic standards",
-            4: "Good - Effective teaching",
-            5: "Excellent - Outstanding educator",
+            20: "Below Average - Needs improvement",
+            40: "Average - Meets basic standards",
+            60: "Good - Effective teaching",
+            80: "Very Good - Strong educational impact",
+            100: "Excellent - Outstanding educator",
         },
     )
 
     return builder.build(is_template=True, tags=["teaching", "education", "classroom"])
+
+
+def create_technical_presentation_rubric() -> Rubric:
+    """Create a rubric for technical presentations and software demonstrations."""
+    builder = RubricBuilder(
+        name="Technical Presentation",
+        description="Evaluate technical presentations, software demos, and technical walkthroughs",
+    )
+
+    # Technical Content Category
+    technical = builder.add_category(
+        name="Technical Content",
+        description="Accuracy and quality of technical information presented",
+        weight=2.5,
+    )
+    technical.add_criterion(
+        name="Technical Accuracy",
+        description="Technical information is correct and demonstrates deep understanding",
+        weight=1.5,
+        scoring_guide="1=Significant errors, 3=Mostly accurate, 5=Completely accurate and authoritative",
+    )
+    technical.add_criterion(
+        name="Technical Depth",
+        description="Appropriate depth for audience - not too basic or overly complex",
+        weight=1.0,
+        scoring_guide="1=Too simplistic or too complex, 3=Adequate depth, 5=Perfect balance for audience",
+    )
+    technical.add_criterion(
+        name="Problem-Solving Approach",
+        description="Clear explanation of technical challenges and solutions",
+        weight=1.0,
+        scoring_guide="1=Unclear approach, 3=Reasonable solutions, 5=Innovative and well-justified solutions",
+    )
+
+    # Code/Demo Quality Category
+    code_demo = builder.add_category(
+        name="Code & Demonstration Quality",
+        description="Quality of code examples and live demonstrations",
+        weight=2.0,
+    )
+    code_demo.add_criterion(
+        name="Code Clarity",
+        description="Code is well-structured, readable, and properly explained",
+        weight=1.0,
+        scoring_guide="1=Confusing code, 3=Readable code, 5=Excellent code quality and documentation",
+    )
+    code_demo.add_criterion(
+        name="Demonstration Effectiveness",
+        description="Live demos work smoothly and effectively illustrate key points",
+        weight=1.0,
+        scoring_guide="1=Demos fail or don't work, 3=Demos work but could be smoother, 5=Flawless, effective demonstrations",
+    )
+    code_demo.add_criterion(
+        name="Visual Technical Aids",
+        description="Diagrams, architecture drawings, and technical visuals are clear and helpful",
+        weight=0.5,
+        scoring_guide="1=Poor or missing visuals, 3=Adequate visuals, 5=Excellent technical visualizations",
+    )
+
+    # Communication Category
+    communication = builder.add_category(
+        name="Technical Communication",
+        description="Ability to explain complex technical concepts clearly",
+        weight=1.5,
+    )
+    communication.add_criterion(
+        name="Concept Explanation",
+        description="Complex technical concepts explained clearly and accessibly",
+        weight=1.0,
+        scoring_guide="1=Confusing explanations, 3=Generally clear, 5=Exceptionally clear and insightful",
+    )
+    communication.add_criterion(
+        name="Audience Adaptation",
+        description="Presentation adapted appropriately for audience technical level",
+        weight=0.75,
+        scoring_guide="1=Doesn't consider audience, 3=Some adaptation, 5=Perfectly tailored to audience",
+    )
+
+    builder.set_scoring_scale(
+        min_score=1,
+        max_score=100,
+        labels={
+            1: "Poor - Technically inadequate",
+            20: "Below Average - Notable technical issues",
+            40: "Average - Technically competent",
+            60: "Good - Strong technical presentation",
+            80: "Very Good - Excellent technical skills",
+            100: "Excellent - Outstanding technical communication",
+        },
+    )
+
+    return builder.build(
+        is_template=True, tags=["technical", "software", "demo", "code"]
+    )
+
+
+def create_sales_marketing_rubric() -> Rubric:
+    """Create a rubric for sales and marketing presentations."""
+    builder = RubricBuilder(
+        name="Sales & Marketing Presentation",
+        description="Evaluate sales pitches, marketing campaigns, and product launch presentations",
+    )
+
+    # Product/Market Category
+    product_market = builder.add_category(
+        name="Product & Market Understanding",
+        description="Knowledge of product and target market",
+        weight=2.0,
+    )
+    product_market.add_criterion(
+        name="Product Knowledge",
+        description="Deep understanding of product features, benefits, and competitive advantages",
+        weight=1.0,
+        scoring_guide="1=Limited product knowledge, 3=Good product understanding, 5=Expert product mastery",
+    )
+    product_market.add_criterion(
+        name="Market Awareness",
+        description="Clear understanding of target market, customer needs, and market dynamics",
+        weight=1.0,
+        scoring_guide="1=Poor market understanding, 3=Basic market awareness, 5=Excellent market insights",
+    )
+
+    # Value Proposition Category
+    value_prop = builder.add_category(
+        name="Value Proposition & Messaging",
+        description="Clarity and persuasiveness of value proposition",
+        weight=2.0,
+    )
+    value_prop.add_criterion(
+        name="Unique Selling Proposition",
+        description="Clear, compelling articulation of what makes the offering unique",
+        weight=1.0,
+        scoring_guide="1=Generic messaging, 3=Clear value prop, 5=Highly differentiated USP",
+    )
+    value_prop.add_criterion(
+        name="Customer Benefits",
+        description="Effectively communicates specific benefits to target customers",
+        weight=1.0,
+        scoring_guide="1=Features-focused, 3=Benefits mentioned, 5=Customer-centric benefits",
+    )
+
+    # Presentation & Persuasion Category
+    presentation = builder.add_category(
+        name="Presentation & Persuasion",
+        description="Delivery effectiveness and persuasive techniques",
+        weight=1.5,
+    )
+    presentation.add_criterion(
+        name="Persuasive Techniques",
+        description="Uses effective sales techniques, storytelling, and objection handling",
+        weight=1.0,
+        scoring_guide="1=Monotone delivery, 3=Some persuasion, 5=Masterful sales presentation",
+    )
+    presentation.add_criterion(
+        name="Call to Action",
+        description="Clear, compelling next steps for the audience",
+        weight=0.5,
+        scoring_guide="1=No clear CTA, 3=Mentioned CTA, 5=Urgent, actionable CTA",
+    )
+
+    # Visual & Materials Category
+    visuals = builder.add_category(
+        name="Visuals & Marketing Materials",
+        description="Quality of supporting materials and visuals",
+        weight=0.5,
+    )
+    visuals.add_criterion(
+        name="Marketing Materials",
+        description="Professional quality of slides, demos, and supporting materials",
+        weight=0.5,
+        scoring_guide="1=Poor materials, 3=Adequate materials, 5=Professional, polished materials",
+    )
+
+    builder.set_scoring_scale(
+        min_score=1,
+        max_score=100,
+        labels={
+            1: "Poor - Not sales-ready",
+            20: "Below Average - Needs significant work",
+            40: "Average - Basic sales competence",
+            60: "Good - Strong sales presentation",
+            80: "Very Good - Compelling sales skills",
+            100: "Excellent - Outstanding sales performance",
+        },
+    )
+
+    return builder.build(
+        is_template=True, tags=["sales", "marketing", "pitch", "product", "campaign"]
+    )
+
+
+def create_legal_presentation_rubric() -> Rubric:
+    """Create a rubric for legal presentations and arguments."""
+    builder = RubricBuilder(
+        name="Legal Presentation",
+        description="Evaluate legal arguments, court presentations, and legal advocacy",
+    )
+
+    # Legal Analysis Category
+    legal_analysis = builder.add_category(
+        name="Legal Analysis & Reasoning",
+        description="Quality of legal analysis and logical reasoning",
+        weight=2.5,
+    )
+    legal_analysis.add_criterion(
+        name="Legal Knowledge",
+        description="Demonstrates comprehensive knowledge of relevant laws and precedents",
+        weight=1.5,
+        scoring_guide="1=Limited legal knowledge, 3=Adequate legal understanding, 5=Expert legal mastery",
+    )
+    legal_analysis.add_criterion(
+        name="Logical Reasoning",
+        description="Clear, logical progression of arguments with sound legal reasoning",
+        weight=1.0,
+        scoring_guide="1=Illogical arguments, 3=Generally logical, 5=Impeccable legal reasoning",
+    )
+
+    # Evidence & Facts Category
+    evidence = builder.add_category(
+        name="Evidence & Factual Support",
+        description="Use of evidence and factual support",
+        weight=2.0,
+    )
+    evidence.add_criterion(
+        name="Evidence Quality",
+        description="Uses relevant, credible evidence to support legal arguments",
+        weight=1.0,
+        scoring_guide="1=Weak or irrelevant evidence, 3=Adequate evidence, 5=Strong, compelling evidence",
+    )
+    evidence.add_criterion(
+        name="Case Law & Precedents",
+        description="Appropriate use of relevant case law and legal precedents",
+        weight=1.0,
+        scoring_guide="1=Missing precedents, 3=Some precedents cited, 5=Comprehensive precedent analysis",
+    )
+
+    # Communication Category
+    communication = builder.add_category(
+        name="Legal Communication",
+        description="Clarity and persuasiveness of legal communication",
+        weight=1.5,
+    )
+    communication.add_criterion(
+        name="Clarity of Argument",
+        description="Legal arguments presented clearly and accessibly",
+        weight=1.0,
+        scoring_guide="1=Confusing arguments, 3=Generally clear, 5=Exceptionally clear legal communication",
+    )
+    communication.add_criterion(
+        name="Professional Demeanor",
+        description="Maintains appropriate professional tone and courtroom presence",
+        weight=0.5,
+        scoring_guide="1=Unprofessional, 3=Professional, 5=Highly authoritative presence",
+    )
+
+    builder.set_scoring_scale(
+        min_score=1,
+        max_score=100,
+        labels={
+            1: "Poor - Legally inadequate",
+            20: "Below Average - Significant legal issues",
+            40: "Average - Basic legal competence",
+            60: "Good - Strong legal presentation",
+            80: "Very Good - Compelling legal arguments",
+            100: "Excellent - Outstanding legal advocacy",
+        },
+    )
+
+    return builder.build(
+        is_template=True, tags=["legal", "court", "law", "advocacy", "argument"]
+    )
+
+
+def create_medical_presentation_rubric() -> Rubric:
+    """Create a rubric for medical and healthcare presentations."""
+    builder = RubricBuilder(
+        name="Medical & Healthcare Presentation",
+        description="Evaluate medical research, patient education, and healthcare presentations",
+    )
+
+    # Medical Knowledge Category
+    medical_knowledge = builder.add_category(
+        name="Medical Knowledge & Accuracy",
+        description="Accuracy and depth of medical information presented",
+        weight=2.5,
+    )
+    medical_knowledge.add_criterion(
+        name="Medical Accuracy",
+        description="Information is medically accurate and up-to-date",
+        weight=1.5,
+        scoring_guide="1=Medical errors present, 3=Generally accurate, 5=Completely accurate and authoritative",
+    )
+    medical_knowledge.add_criterion(
+        name="Evidence-Based Practice",
+        description="Presentation grounded in current medical evidence and research",
+        weight=1.0,
+        scoring_guide="1=Not evidence-based, 3=Some evidence cited, 5=Strong evidence-based approach",
+    )
+
+    # Patient/Customer Focus Category
+    patient_focus = builder.add_category(
+        name="Patient/Customer Focus",
+        description="Effectiveness in addressing patient/customer needs",
+        weight=2.0,
+    )
+    patient_focus.add_criterion(
+        name="Patient Education",
+        description="Effectively educates patients/customers about medical conditions/treatments",
+        weight=1.0,
+        scoring_guide="1=Poor patient education, 3=Adequate information, 5=Excellent patient education",
+    )
+    patient_focus.add_criterion(
+        name="Empathy & Communication",
+        description="Demonstrates empathy and clear communication with patients/customers",
+        weight=1.0,
+        scoring_guide="1=Lacks empathy, 3=Some empathy shown, 5=Highly empathetic and clear",
+    )
+
+    # Ethical & Professional Category
+    ethics = builder.add_category(
+        name="Ethics & Professionalism",
+        description="Ethical considerations and professional standards",
+        weight=1.0,
+    )
+    ethics.add_criterion(
+        name="Ethical Considerations",
+        description="Addresses ethical implications and patient rights appropriately",
+        weight=0.5,
+        scoring_guide="1=Ignores ethics, 3=Mentions ethics, 5=Comprehensive ethical analysis",
+    )
+    ethics.add_criterion(
+        name="Professional Standards",
+        description="Maintains high professional standards and patient confidentiality",
+        weight=0.5,
+        scoring_guide="1=Unprofessional, 3=Professional, 5=Exemplary professionalism",
+    )
+
+    # Practical Application Category
+    application = builder.add_category(
+        name="Practical Application",
+        description="Practical relevance and implementation",
+        weight=0.5,
+    )
+    application.add_criterion(
+        name="Clinical Relevance",
+        description="Information is clinically relevant and applicable",
+        weight=0.5,
+        scoring_guide="1=Not clinically relevant, 3=Some relevance, 5=Highly clinically relevant",
+    )
+
+    builder.set_scoring_scale(
+        min_score=1,
+        max_score=100,
+        labels={
+            1: "Poor - Medically inadequate",
+            20: "Below Average - Significant medical issues",
+            40: "Average - Basic medical competence",
+            60: "Good - Strong medical presentation",
+            80: "Very Good - Excellent medical communication",
+            100: "Excellent - Outstanding medical communication",
+        },
+    )
+
+    return builder.build(
+        is_template=True,
+        tags=["medical", "healthcare", "patient", "clinical", "education"],
+    )
+
+
+def create_political_social_rubric() -> Rubric:
+    """Create a rubric for political and social presentations."""
+    builder = RubricBuilder(
+        name="Political & Social Presentation",
+        description="Evaluate political speeches, campaign presentations, and social advocacy",
+    )
+
+    # Message & Vision Category
+    message = builder.add_category(
+        name="Message & Vision",
+        description="Clarity and persuasiveness of core message and vision",
+        weight=2.0,
+    )
+    message.add_criterion(
+        name="Clear Message",
+        description="Core message and position clearly articulated",
+        weight=1.0,
+        scoring_guide="1=Unclear message, 3=Generally clear, 5=Crystal clear and compelling message",
+    )
+    message.add_criterion(
+        name="Vision & Goals",
+        description="Presents clear vision and achievable goals",
+        weight=1.0,
+        scoring_guide="1=Vague goals, 3=Some goals stated, 5=Inspiring vision with clear goals",
+    )
+
+    # Evidence & Facts Category
+    evidence = builder.add_category(
+        name="Evidence & Factual Support",
+        description="Use of facts, data, and evidence to support positions",
+        weight=2.0,
+    )
+    evidence.add_criterion(
+        name="Factual Accuracy",
+        description="Information presented is factually accurate and verifiable",
+        weight=1.0,
+        scoring_guide="1=Factual errors, 3=Mostly accurate, 5=Completely factually accurate",
+    )
+    evidence.add_criterion(
+        name="Data & Research",
+        description="Appropriate use of data, research, and supporting evidence",
+        weight=1.0,
+        scoring_guide="1=No supporting data, 3=Some data cited, 5=Comprehensive data-driven arguments",
+    )
+
+    # Emotional Appeal & Connection Category
+    emotional = builder.add_category(
+        name="Emotional Appeal & Connection",
+        description="Ability to connect emotionally and inspire action",
+        weight=1.5,
+    )
+    emotional.add_criterion(
+        name="Emotional Connection",
+        description="Creates emotional connection with audience through storytelling",
+        weight=1.0,
+        scoring_guide="1=No emotional appeal, 3=Some emotional elements, 5=Powerful emotional connection",
+    )
+    emotional.add_criterion(
+        name="Call to Action",
+        description="Clear, motivating call to action for audience engagement",
+        weight=0.5,
+        scoring_guide="1=No clear action, 3=Mentioned action, 5=Compelling, actionable call",
+    )
+
+    # Inclusivity & Ethics Category
+    inclusivity = builder.add_category(
+        name="Inclusivity & Ethics",
+        description="Addresses diverse perspectives and maintains ethical standards",
+        weight=0.5,
+    )
+    inclusivity.add_criterion(
+        name="Inclusive Messaging",
+        description="Considers and addresses diverse audience perspectives",
+        weight=0.5,
+        scoring_guide="1=Excludes perspectives, 3=Some inclusivity, 5=Highly inclusive messaging",
+    )
+
+    builder.set_scoring_scale(
+        min_score=1,
+        max_score=100,
+        labels={
+            1: "Poor - Not persuasive",
+            20: "Below Average - Lacks impact",
+            40: "Average - Basic effectiveness",
+            60: "Good - Strong persuasive presentation",
+            80: "Very Good - Compelling advocacy",
+            100: "Excellent - Outstanding advocacy and persuasion",
+        },
+    )
+
+    return builder.build(
+        is_template=True, tags=["political", "social", "campaign", "advocacy", "speech"]
+    )
+
+
+def create_entertainment_media_rubric() -> Rubric:
+    """Create a rubric for entertainment and media presentations."""
+    builder = RubricBuilder(
+        name="Entertainment & Media Presentation",
+        description="Evaluate entertainment pitches, media proposals, and creative media presentations",
+    )
+
+    # Creative Concept Category
+    concept = builder.add_category(
+        name="Creative Concept & Vision",
+        description="Originality and appeal of the creative concept",
+        weight=2.5,
+    )
+    concept.add_criterion(
+        name="Originality & Innovation",
+        description="Concept demonstrates creative originality and market differentiation",
+        weight=1.5,
+        scoring_guide="1=Derivative concept, 3=Some originality, 5=Highly innovative and unique",
+    )
+    concept.add_criterion(
+        name="Market Appeal",
+        description="Concept has clear appeal to target audience and market potential",
+        weight=1.0,
+        scoring_guide="1=Limited appeal, 3=Some market potential, 5=Strong market appeal and potential",
+    )
+
+    # Storytelling & Content Category
+    storytelling = builder.add_category(
+        name="Storytelling & Content Quality",
+        description="Quality of narrative and content development",
+        weight=2.0,
+    )
+    storytelling.add_criterion(
+        name="Narrative Quality",
+        description="Compelling story structure and character development",
+        weight=1.0,
+        scoring_guide="1=Weak narrative, 3=Adequate story, 5=Outstanding storytelling",
+    )
+    storytelling.add_criterion(
+        name="Content Appropriateness",
+        description="Content appropriate for target audience and platform",
+        weight=1.0,
+        scoring_guide="1=Inappropriate content, 3=Generally appropriate, 5=Perfectly targeted content",
+    )
+
+    # Production & Execution Category
+    production = builder.add_category(
+        name="Production & Execution",
+        description="Quality of production values and execution",
+        weight=1.5,
+    )
+    production.add_criterion(
+        name="Production Quality",
+        description="Technical and production quality meets industry standards",
+        weight=1.0,
+        scoring_guide="1=Poor production, 3=Adequate quality, 5=Professional production values",
+    )
+    production.add_criterion(
+        name="Feasibility",
+        description="Concept is realistically feasible within budget and timeline",
+        weight=0.5,
+        scoring_guide="1=Not feasible, 3=Challenging but possible, 5=Highly feasible",
+    )
+
+    builder.set_scoring_scale(
+        min_score=1,
+        max_score=100,
+        labels={
+            1: "Poor - Not marketable",
+            20: "Below Average - Needs significant development",
+            40: "Average - Basic entertainment value",
+            60: "Good - Strong entertainment potential",
+            80: "Very Good - Promising creative work",
+            100: "Excellent - Outstanding creative and commercial potential",
+        },
+    )
+
+    return builder.build(
+        is_template=True,
+        tags=["entertainment", "media", "pitch", "creative", "production"],
+    )
+
+
+def create_creative_presentation_rubric() -> Rubric:
+    """Create a rubric for creative and artistic presentations."""
+    builder = RubricBuilder(
+        name="Creative Presentation",
+        description="Evaluate creative work, artistic portfolios, and innovative project presentations",
+    )
+
+    # Creative Vision & Originality Category
+    creative = builder.add_category(
+        name="Creative Vision & Originality",
+        description="Originality and artistic vision of the creative work",
+        weight=2.5,
+    )
+    creative.add_criterion(
+        name="Originality & Innovation",
+        description="Work demonstrates unique creativity and innovative approaches",
+        weight=1.5,
+        scoring_guide="1=Derivative/unoriginal, 3=Some originality, 5=Highly innovative and unique",
+    )
+    creative.add_criterion(
+        name="Artistic Vision",
+        description="Clear artistic intent and conceptual framework",
+        weight=1.0,
+        scoring_guide="1=Unclear vision, 3=Developing vision, 5=Compelling, well-articulated vision",
+    )
+    creative.add_criterion(
+        name="Creative Process",
+        description="Effective explanation of the creative process and decision-making",
+        weight=1.0,
+        scoring_guide="1=Process unclear, 3=Some process insight, 5=Excellent process documentation",
+    )
+
+    # Aesthetic & Technical Quality Category
+    aesthetic = builder.add_category(
+        name="Aesthetic & Technical Quality",
+        description="Quality of the creative output and technical execution",
+        weight=2.0,
+    )
+    aesthetic.add_criterion(
+        name="Aesthetic Quality",
+        description="Visual/design appeal and artistic craftsmanship",
+        weight=1.0,
+        scoring_guide="1=Poor aesthetics, 3=Adequate quality, 5=Outstanding aesthetic achievement",
+    )
+    aesthetic.add_criterion(
+        name="Technical Proficiency",
+        description="Mastery of tools, techniques, and medium-specific skills",
+        weight=1.0,
+        scoring_guide="1=Technical weaknesses, 3=Competent execution, 5=Masterful technical skill",
+    )
+    aesthetic.add_criterion(
+        name="Portfolio Presentation",
+        description="Effective presentation and curation of creative work",
+        weight=0.5,
+        scoring_guide="1=Poor presentation, 3=Adequate display, 5=Professional, compelling presentation",
+    )
+
+    # Impact & Communication Category
+    impact = builder.add_category(
+        name="Impact & Communication",
+        description="Emotional impact and ability to communicate creative intent",
+        weight=1.5,
+    )
+    impact.add_criterion(
+        name="Emotional Resonance",
+        description="Work evokes emotional response and engages audience",
+        weight=1.0,
+        scoring_guide="1=No emotional impact, 3=Some engagement, 5=Powerful emotional connection",
+    )
+    impact.add_criterion(
+        name="Concept Communication",
+        description="Successfully communicates creative concepts and ideas",
+        weight=0.75,
+        scoring_guide="1=Ideas unclear, 3=Concepts conveyed, 5=Brilliant concept communication",
+    )
+
+    builder.set_scoring_scale(
+        min_score=1,
+        max_score=100,
+        labels={
+            1: "Poor - Lacks creative merit",
+            20: "Below Average - Developing talent",
+            40: "Average - Solid creative work",
+            60: "Good - Strong creative presentation",
+            80: "Very Good - Impressive creative work",
+            100: "Excellent - Outstanding creative achievement",
+        },
+    )
+
+    return builder.build(
+        is_template=True, tags=["creative", "artistic", "portfolio", "design"]
+    )
 
 
 def create_general_presentation_rubric() -> Rubric:
@@ -368,13 +1010,14 @@ def create_general_presentation_rubric() -> Rubric:
 
     builder.set_scoring_scale(
         min_score=1,
-        max_score=5,
+        max_score=100,
         labels={
             1: "Poor",
-            2: "Below Average",
-            3: "Average",
-            4: "Good",
-            5: "Excellent",
+            20: "Below Average",
+            40: "Average",
+            60: "Good",
+            80: "Very Good",
+            100: "Excellent",
         },
     )
 
@@ -385,7 +1028,7 @@ def get_default_rubric(rubric_type: str) -> Rubric | None:
     """Get a default rubric by type.
 
     Args:
-        rubric_type: Type of rubric (academic, business, teaching, general)
+        rubric_type: Type of rubric (academic, business, teaching, technical, creative, sales, legal, medical, political, entertainment, general)
 
     Returns:
         Rubric object or None if type not found
@@ -394,6 +1037,13 @@ def get_default_rubric(rubric_type: str) -> Rubric | None:
         "academic": create_academic_presentation_rubric,
         "business": create_business_pitch_rubric,
         "teaching": create_teaching_demo_rubric,
+        "technical": create_technical_presentation_rubric,
+        "creative": create_creative_presentation_rubric,
+        "sales": create_sales_marketing_rubric,
+        "legal": create_legal_presentation_rubric,
+        "medical": create_medical_presentation_rubric,
+        "political": create_political_social_rubric,
+        "entertainment": create_entertainment_media_rubric,
         "general": create_general_presentation_rubric,
     }
 
@@ -403,4 +1053,16 @@ def get_default_rubric(rubric_type: str) -> Rubric | None:
 
 def list_default_rubrics() -> list[str]:
     """List all available default rubric types."""
-    return ["academic", "business", "teaching", "general"]
+    return [
+        "academic",
+        "business",
+        "teaching",
+        "technical",
+        "creative",
+        "sales",
+        "legal",
+        "medical",
+        "political",
+        "entertainment",
+        "general",
+    ]

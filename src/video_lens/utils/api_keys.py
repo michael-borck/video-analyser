@@ -12,13 +12,14 @@ from typing import Literal
 logger = logging.getLogger(__name__)
 
 # Supported API providers
-APIProvider = Literal["anthropic", "openai", "google"]
+APIProvider = Literal["anthropic", "openai", "google", "openrouter"]
 
 # Standard environment variable names for each provider
 STANDARD_ENV_VARS: dict[str, str] = {
     "anthropic": "ANTHROPIC_API_KEY",
     "openai": "OPENAI_API_KEY",
     "google": "GOOGLE_API_KEY",
+    "openrouter": "OPENROUTER_API_KEY",
 }
 
 
@@ -140,6 +141,9 @@ def validate_api_key(provider: APIProvider, api_key: str) -> bool:
     elif provider == "google":
         # Google API keys are typically 39 characters
         return len(api_key) > 20
+    elif provider == "openrouter":
+        # OpenRouter keys start with sk-or-
+        return api_key.startswith("sk-or-") and len(api_key) > 20
 
     return False
 

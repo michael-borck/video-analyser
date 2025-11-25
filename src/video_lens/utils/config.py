@@ -136,8 +136,10 @@ class VisualAnalysisConfig(BaseModel):
     caption_batch_size: int = Field(default=1, ge=1, le=8)
 
     # API captioning settings
-    api_provider: str = Field(default="anthropic")  # anthropic, openai, google
-    api_model: str = Field(default="claude-haiku-4-5")  # Fast and cost-effective
+    api_provider: str = Field(default="anthropic")  # anthropic, openai, google, openrouter
+    api_model: str = Field(
+        default="claude-haiku-4-5-20251001"
+    )  # Provider-specific default models
     api_key_env_var: str = Field(default="ANTHROPIC_API_KEY")
     api_max_concurrent: int = Field(default=5, ge=1, le=20)
     api_timeout: float = Field(default=30.0, ge=5.0, le=120.0)
@@ -207,12 +209,32 @@ class VisualAnalysisConfig(BaseModel):
     @classmethod
     def validate_api_provider(cls, v: str) -> str:
         """Validate API provider."""
-        valid_providers = {"anthropic", "openai", "google"}
+        valid_providers = {"anthropic", "openai", "google", "openrouter"}
         if v.lower() not in valid_providers:
             raise ValueError(
                 f"Invalid API provider: {v}. Valid options: {valid_providers}"
             )
         return v.lower()
+
+    @field_validator("api_model")
+    @classmethod
+    def validate_api_model(cls, v: str, info: ValidationInfo) -> str:
+        """Validate and set default API model based on provider."""
+        # Provider-specific default models
+        default_models = {
+            "anthropic": "claude-haiku-4-5-20251001",
+            "openai": "gpt-4o",
+            "google": "gemini-2.5-flash",
+            "openrouter": "openai/gpt-4-turbo",
+        }
+
+        # If model is the global default and provider is set, use provider default
+        if v == "claude-haiku-4-5-20251001" and "api_provider" in info.data:
+            provider = info.data.get("api_provider", "anthropic")
+            if provider in default_models and provider != "anthropic":
+                return default_models[provider]
+
+        return v
 
     @field_validator("ocr_engine")
     @classmethod
@@ -310,7 +332,7 @@ class VideoLensConfig(BaseSettings):
 
     # Application settings
     app_name: str = Field(default="Video Lens")
-    version: str = Field(default="0.5.0")
+    version: str = Field(default="0.5.17")
     debug: bool = Field(default=False)
 
     # Component configurations

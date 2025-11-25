@@ -17,6 +17,10 @@ import numpy as np
 from PIL import Image
 from pydantic import BaseModel
 
+import numpy as np
+from PIL import Image
+from pydantic import BaseModel
+
 from video_lens.utils.api_keys import APIProvider, get_api_key_with_validation
 from video_lens.utils.config import get_config
 
@@ -306,6 +310,89 @@ Provide a single paragraph caption (2-4 sentences) that would help someone under
             logger.error(f"Google API error: {e}")
             raise
 
+    async def _caption_with_openrouter(self, image_base64: str) -> dict[str, Any]:
+        """Caption image using OpenRouter API."""
+        try:
+            import httpx  # type: ignore[import-not-found]
+        except ImportError as e:
+            raise ImportError(
+                "httpx package required for OpenRouter API. Install with: pip install httpx"
+            ) from e
+
+        # OpenRouter uses a compatible interface with OpenAI
+        # but requires a different base URL and headers
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "HTTP-Referer": "https://github.com/anthropics/video-lens",
+            "X-Title": "Video Lens",
+        }
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(  # type: ignore[attr-defined]
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers=headers,
+                    json={
+                        "model": self.model,
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": [
+                                    {
+                                        "type": "image_url",
+                                        "image_url": {
+                                            "url": f"data:image/jpeg;base64,{image_base64}"
+                                        },
+                                    },
+                                    {"type": "text", "text": self._get_caption_prompt()},
+                                ],
+                            }
+                        ],
+                        "max_tokens": 1024,
+                    },
+                    timeout=self.timeout,
+                )
+
+            result = response.json()  # type: ignore[attr-defined]
+
+            if "error" in result:
+                raise ValueError(f"OpenRouter API error: {result['error']}")
+
+            caption = result["choices"][0]["message"]["content"]  # type: ignore[index]
+            tokens_in = result.get("usage", {}).get("prompt_tokens")  # type: ignore[index]
+            tokens_out = result.get("usage", {}).get("completion_tokens")  # type: ignore[index]
+            tokens_total = result.get("usage", {}).get("total_tokens")  # type: ignore[index]
+
+            # OpenRouter pricing varies by model
+            # For now, use generic pricing based on model type
+            # These are approximate prices for common models via OpenRouter
+            pricing = {
+                "openai/gpt-4-turbo": (10.00, 30.00),  # $10 input, $30 output per MTok
+                "openai/gpt-4o": (2.50, 10.00),  # $2.50 input, $10 output per MTok
+                "anthropic/claude-3-haiku": (0.80, 4.00),  # $0.80 input, $4 output per MTok
+                "google/gemini-2.0-flash": (0.075, 0.30),  # $0.075 input, $0.30 output per MTok
+            }
+
+            # Get pricing for current model or use a reasonable default
+            input_price, output_price = pricing.get(self.model, (0.50, 2.00))
+
+            # Calculate cost in dollars
+            cost = None
+            if tokens_in and tokens_out:
+                cost = (tokens_in / 1_000_000 * input_price) + (  # type: ignore[operator]
+                    tokens_out / 1_000_000 * output_price
+                )
+
+            return {
+                "caption": caption.strip(),
+                "tokens": tokens_total,
+                "cost": cost,
+            }
+
+        except Exception as e:
+            logger.error(f"OpenRouter API error: {e}")
+            raise
+
     async def _caption_single_image_async(self, image: Any) -> APICaptionResult:
         """
         Caption a single image using the configured API.
@@ -334,6 +421,8 @@ Provide a single paragraph caption (2-4 sentences) that would help someone under
                     result = await self._caption_with_openai(image_base64)
                 elif self.provider == "google":
                     result = await self._caption_with_google(image_base64)
+                elif self.provider == "openrouter":
+                    result = await self._caption_with_openrouter(image_base64)
                 else:
                     raise ValueError(f"Unsupported provider: {self.provider}")
 
