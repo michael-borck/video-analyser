@@ -1,6 +1,6 @@
-# DeepBrief
+# Video Lens
 
-[![PyPI version](https://badge.fury.io/py/deep-brief.svg)](https://pypi.org/project/deep-brief/)
+[![PyPI version](https://badge.fury.io/py/video-lens.svg)](https://pypi.org/project/video-lens/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -26,7 +26,7 @@ A video analysis application that helps students, educators, and professionals a
 ### Option 1: Install from PyPI (recommended for users)
 
 ```bash
-pip install deep-brief
+pip install video-lens
 ```
 
 ### Option 2: Install from source (for development)
@@ -36,8 +36,8 @@ pip install deep-brief
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone the repository
-git clone https://github.com/michael-borck/deep-brief.git
-cd deep-brief
+git clone https://github.com/michael-borck/video-lens.git
+cd video-lens
 
 # Create virtual environment and install
 uv venv
@@ -64,16 +64,16 @@ Download from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.htm
 
 ```bash
 # Show available commands
-deep-brief --help
+video-lens --help
 
 # Check version
-deep-brief version
+video-lens version
 
 # Launch web interface (coming soon)
-deep-brief analyze
+video-lens analyze
 
 # Analyze a specific video (CLI mode - coming soon)
-deep-brief analyze video.mp4 --output ./reports
+video-lens analyze video.mp4 --output ./reports
 ```
 
 **Current Status**: The CLI framework is complete. Video processing features are in active development.
@@ -92,13 +92,13 @@ This project uses modern Python tooling and follows strict quality standards:
 
 ```bash
 # Clone and setup
-git clone https://github.com/michael-borck/deep-brief.git
-cd deep-brief
+git clone https://github.com/michael-borck/video-lens.git
+cd video-lens
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
 
 # Verify setup
-deep-brief --help
+video-lens --help
 pytest -v
 ```
 
@@ -124,9 +124,9 @@ ruff format . && ruff check . && basedpyright && pytest -v
 ### Project Structure
 
 ```
-src/deep_brief/          # Main package
+src/video_lens/          # Main package
 ├── core/                # Video processing pipeline
-├── analysis/            # Speech and visual analysis  
+├── analysis/            # Speech and visual analysis
 ├── reports/             # Report generation
 ├── interface/           # Gradio web interface
 └── utils/               # Configuration and utilities
@@ -148,8 +148,8 @@ See `tasks/tasks-prd-phase1-mvp.md` for detailed task tracking.
 
 ## Links
 
-- **PyPI**: https://pypi.org/project/deep-brief/
-- **GitHub**: https://github.com/michael-borck/deep-brief
+- **PyPI**: https://pypi.org/project/video-lens/
+- **GitHub**: https://github.com/michael-borck/video-lens
 - **Documentation**: Coming soon
 
 ## License
