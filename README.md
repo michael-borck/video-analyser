@@ -1,5 +1,9 @@
 # Video Lens
 
+<!-- BADGES:START -->
+[![ai-feedback](https://img.shields.io/badge/-ai--feedback-blue?style=flat-square)](https://github.com/topics/ai-feedback) [![cli-tool](https://img.shields.io/badge/-cli--tool-blue?style=flat-square)](https://github.com/topics/cli-tool) [![computer-vision](https://img.shields.io/badge/-computer--vision-blue?style=flat-square)](https://github.com/topics/computer-vision) [![python](https://img.shields.io/badge/-python-3776ab?style=flat-square)](https://github.com/topics/python) [![speech-recognition](https://img.shields.io/badge/-speech--recognition-blue?style=flat-square)](https://github.com/topics/speech-recognition) [![video-analysis](https://img.shields.io/badge/-video--analysis-blue?style=flat-square)](https://github.com/topics/video-analysis) [![web-application](https://img.shields.io/badge/-web--application-blue?style=flat-square)](https://github.com/topics/web-application) [![presentation-analysis](https://img.shields.io/badge/-presentation--analysis-blue?style=flat-square)](https://github.com/topics/presentation-analysis) [![edtech](https://img.shields.io/badge/-edtech-4caf50?style=flat-square)](https://github.com/topics/edtech) [![ffmpeg](https://img.shields.io/badge/-ffmpeg-blue?style=flat-square)](https://github.com/topics/ffmpeg)
+<!-- BADGES:END -->
+
 [![PyPI version](https://badge.fury.io/py/video-lens.svg)](https://pypi.org/project/video-lens/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
