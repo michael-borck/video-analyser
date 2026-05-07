@@ -1,4 +1,4 @@
-"""Configuration management for Video Lens."""
+"""Configuration management for Video Analyser."""
 
 import logging
 from pathlib import Path
@@ -303,7 +303,7 @@ class LoggingConfig(BaseModel):
     level: str = Field(default="INFO")
     format: str = Field(default="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     file_enabled: bool = Field(default=True)
-    file_path: Path = Field(default=Path("logs/video_lens.log"))
+    file_path: Path = Field(default=Path("logs/video_analyser.log"))
     max_bytes: int = Field(default=10_000_000)  # 10MB
     backup_count: int = Field(default=5)
     console_enabled: bool = Field(default=True)
@@ -318,11 +318,11 @@ class LoggingConfig(BaseModel):
         return v.upper()
 
 
-class VideoLensConfig(BaseSettings):
-    """Main configuration for Video Lens."""
+class VideoAnalyserConfig(BaseSettings):
+    """Main configuration for Video Analyser."""
 
     model_config = SettingsConfigDict(
-        env_prefix="VIDEO_LENS_",
+        env_prefix="VIDEO_ANALYSER_",
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
@@ -331,8 +331,8 @@ class VideoLensConfig(BaseSettings):
     )
 
     # Application settings
-    app_name: str = Field(default="Video Lens")
-    version: str = Field(default="0.5.17")
+    app_name: str = Field(default="Video Analyser")
+    version: str = Field(default="0.6.0")
     debug: bool = Field(default=False)
 
     # Component configurations
@@ -346,7 +346,7 @@ class VideoLensConfig(BaseSettings):
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
 
 
-def load_config(config_path: Path | None = None) -> VideoLensConfig:
+def load_config(config_path: Path | None = None) -> VideoAnalyserConfig:
     """
     Load configuration from file and environment variables.
 
@@ -364,7 +364,7 @@ def load_config(config_path: Path | None = None) -> VideoLensConfig:
         possible_paths = [
             Path("config/config.yaml"),
             Path("config.yaml"),
-            Path.home() / ".video-lens" / "config.yaml",
+            Path.home() / ".video-analyser" / "config.yaml",
         ]
         for path in possible_paths:
             if path.exists():
@@ -379,10 +379,10 @@ def load_config(config_path: Path | None = None) -> VideoLensConfig:
             logging.warning(f"Failed to load config from {config_path}: {e}")
 
     # Create config object (environment variables will override file values)
-    return VideoLensConfig(**config_data)
+    return VideoAnalyserConfig(**config_data)
 
 
-def save_config(config: VideoLensConfig, config_path: Path) -> None:
+def save_config(config: VideoAnalyserConfig, config_path: Path) -> None:
     """
     Save configuration to YAML file.
 
@@ -415,7 +415,7 @@ def setup_logging(config: LoggingConfig) -> None:
     import logging.handlers
 
     # Create logger
-    logger = logging.getLogger("video_lens")
+    logger = logging.getLogger("video_analyser")
     logger.setLevel(getattr(logging, config.level))
 
     # Clear existing handlers
@@ -451,10 +451,10 @@ def setup_logging(config: LoggingConfig) -> None:
 
 
 # Global configuration cache
-_global_config: VideoLensConfig | None = None
+_global_config: VideoAnalyserConfig | None = None
 
 
-def get_config() -> VideoLensConfig:
+def get_config() -> VideoAnalyserConfig:
     """Get the global configuration instance."""
     global _global_config
     if _global_config is None:
@@ -463,14 +463,14 @@ def get_config() -> VideoLensConfig:
     return _global_config
 
 
-def reload_config(_config_path: Path | None = None) -> VideoLensConfig:
+def reload_config(_config_path: Path | None = None) -> VideoAnalyserConfig:
     """Reload configuration from file."""
     if hasattr(get_config, "_config"):
         delattr(get_config, "_config")
     return get_config()
 
 
-def export_config_to_json(config: VideoLensConfig, output_path: Path) -> None:
+def export_config_to_json(config: VideoAnalyserConfig, output_path: Path) -> None:
     """
     Export configuration to JSON format.
 
@@ -491,7 +491,7 @@ def export_config_to_json(config: VideoLensConfig, output_path: Path) -> None:
     logging.getLogger(__name__).info(f"Configuration exported to {output_path}")
 
 
-def export_config_to_env(config: VideoLensConfig, output_path: Path) -> None:
+def export_config_to_env(config: VideoAnalyserConfig, output_path: Path) -> None:
     """
     Export configuration to .env file format.
 
@@ -502,7 +502,7 @@ def export_config_to_env(config: VideoLensConfig, output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     def flatten_config(
-        data: dict[str, Any], prefix: str = "DEEP_BRIEF"
+        data: dict[str, Any], prefix: str = "VIDEO_ANALYSER"
     ) -> dict[str, str]:
         """Flatten nested config to env var format."""
         result: dict[str, str] = {}
@@ -532,7 +532,7 @@ def export_config_to_env(config: VideoLensConfig, output_path: Path) -> None:
     env_vars = flatten_config(config_dict)
 
     with open(output_path, "w", encoding="utf-8") as f:
-        f.write("# DeepBrief Configuration\n")
+        f.write("# Video Analyser Configuration\n")
         f.write("# Auto-generated .env file\n\n")
         for key, value in sorted(env_vars.items()):
             f.write(f'{key}="{value}"\n')
@@ -547,12 +547,12 @@ def create_default_config_file(output_path: Path) -> None:
     Args:
         output_path: Path where to create the config file.
     """
-    default_config = VideoLensConfig()
+    default_config = VideoAnalyserConfig()
     save_config(default_config, output_path)
     logging.getLogger(__name__).info(f"Default config created at {output_path}")
 
 
-def validate_config(config: VideoLensConfig) -> tuple[bool, list[str]]:
+def validate_config(config: VideoAnalyserConfig) -> tuple[bool, list[str]]:
     """
     Validate configuration and return validation results.
 
@@ -605,19 +605,19 @@ def get_config_schema() -> dict[str, Any]:
     Get JSON schema for the configuration.
 
     Returns:
-        JSON schema for VideoLensConfig.
+        JSON schema for VideoAnalyserConfig.
     """
-    return VideoLensConfig.model_json_schema()  # type: ignore
+    return VideoAnalyserConfig.model_json_schema()  # type: ignore
 
 
-def reset_config_to_defaults() -> VideoLensConfig:
+def reset_config_to_defaults() -> VideoAnalyserConfig:
     """
     Reset configuration to default values.
 
     Returns:
-        New VideoLensConfig with default values.
+        New VideoAnalyserConfig with default values.
     """
     global _global_config
-    _global_config = VideoLensConfig()
+    _global_config = VideoAnalyserConfig()
     setup_logging(_global_config.logging)
     return _global_config

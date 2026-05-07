@@ -5,14 +5,14 @@ from pathlib import Path
 
 import pytest
 
-from video_lens.reports.assessment_integration import AssessmentIntegration
-from video_lens.reports.assessment_report import (
+from video_analyser.reports.assessment_integration import AssessmentIntegration
+from video_analyser.reports.assessment_report import (
     AssessmentDiarizationSegment,
     AssessmentReport,
     AssessmentSpeakerProfile,
 )
-from video_lens.reports.grading_sheet_renderer import GradingSheetRenderer
-from video_lens.reports.report_generator import (
+from video_analyser.reports.grading_sheet_renderer import GradingSheetRenderer
+from video_analyser.reports.report_generator import (
     AnalysisReport,
     AudioMetadata,
     SpeechMetrics,

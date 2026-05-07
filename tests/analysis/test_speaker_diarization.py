@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from video_lens.analysis.speaker_diarization import (
+from video_analyser.analysis.speaker_diarization import (
     DiarizationResult,
     SpeakerDiarizer,
     SpeakerProfile,

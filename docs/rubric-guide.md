@@ -35,7 +35,7 @@ For research presentations, conference talks, and academic seminars.
 
 **Usage:**
 ```bash
-deep-brief rubric create --type academic
+video-analyser rubric create --type academic
 ```
 
 ### 2. Business Pitch
@@ -48,7 +48,7 @@ For startup pitches, investor presentations, and business proposals.
 
 **Usage:**
 ```bash
-deep-brief rubric create --type business
+video-analyser rubric create --type business
 ```
 
 ### 3. Teaching Demonstration
@@ -61,7 +61,7 @@ For teaching job interviews, lesson observations, and pedagogical presentations.
 
 **Usage:**
 ```bash
-deep-brief rubric create --type teaching
+video-analyser rubric create --type teaching
 ```
 
 ### 4. General Presentation
@@ -75,7 +75,7 @@ A flexible rubric for any type of presentation.
 
 **Usage:**
 ```bash
-deep-brief rubric create --type general
+video-analyser rubric create --type general
 ```
 
 ## CLI Commands
@@ -85,13 +85,13 @@ deep-brief rubric create --type general
 Show all available default and custom rubrics:
 
 ```bash
-deep-brief rubric list
+video-analyser rubric list
 ```
 
 **Output example:**
 ```
 Available Default Rubrics
-(Can be created with: deep-brief rubric create --type <type>)
+(Can be created with: video-analyser rubric create --type <type>)
 
   ACADEMIC
     Evaluate academic presentations at conferences, seminars, or classroom settings
@@ -118,12 +118,12 @@ Custom Rubrics
 Display detailed information about a specific rubric:
 
 ```bash
-deep-brief rubric show --id <rubric_id>
+video-analyser rubric show --id <rubric_id>
 ```
 
 **Example:**
 ```bash
-deep-brief rubric show --id 550e8400-e29b-41d4-a716-446655440000
+video-analyser rubric show --id 550e8400-e29b-41d4-a716-446655440000
 ```
 
 **Output:**
@@ -156,14 +156,14 @@ Categories:
 Create a new rubric based on a default template:
 
 ```bash
-deep-brief rubric create --type <type>
+video-analyser rubric create --type <type>
 ```
 
 **Available types:** `academic`, `business`, `teaching`, `general`
 
 **Example:**
 ```bash
-deep-brief rubric create --type business
+video-analyser rubric create --type business
 ```
 
 **Output:**
@@ -181,12 +181,12 @@ Rubric saved to: rubrics/550e8400-e29b-41d4-a716-446655440000.json
 Export a rubric to a JSON file for sharing or version control:
 
 ```bash
-deep-brief rubric export --id <rubric_id> --output <file_path>
+video-analyser rubric export --id <rubric_id> --output <file_path>
 ```
 
 **Example:**
 ```bash
-deep-brief rubric export \
+video-analyser rubric export \
   --id 550e8400-e29b-41d4-a716-446655440000 \
   --output ./rubrics/business-pitch-rubric.json
 ```
@@ -196,12 +196,12 @@ deep-brief rubric export \
 Remove a custom rubric:
 
 ```bash
-deep-brief rubric delete --id <rubric_id>
+video-analyser rubric delete --id <rubric_id>
 ```
 
 **Example:**
 ```bash
-deep-brief rubric delete --id 550e8400-e29b-41d4-a716-446655440000
+video-analyser rubric delete --id 550e8400-e29b-41d4-a716-446655440000
 ```
 
 (You'll be prompted to confirm deletion)
@@ -213,7 +213,7 @@ deep-brief rubric delete --id 550e8400-e29b-41d4-a716-446655440000
 Create a custom rubric programmatically:
 
 ```python
-from deep_brief.analysis.rubric_system import RubricBuilder, RubricRepository
+from video_analyser.analysis.rubric_system import RubricBuilder, RubricRepository
 
 # Create rubric
 builder = RubricBuilder(
@@ -346,7 +346,7 @@ Save this as `rubrics/<rubric_id>.json` and Deep-Brief will automatically load i
 Fluent API for creating rubrics:
 
 ```python
-from deep_brief.analysis.rubric_system import RubricBuilder
+from video_analyser.analysis.rubric_system import RubricBuilder
 
 builder = RubricBuilder(name="Rubric Name", description="Optional description")
 
@@ -377,7 +377,7 @@ rubric = builder.build(is_template=False, tags=["custom"])
 File-based storage for rubrics:
 
 ```python
-from deep_brief.analysis.rubric_system import RubricRepository
+from video_analyser.analysis.rubric_system import RubricRepository
 
 # Initialize repository
 repo = RubricRepository("rubrics/")
@@ -406,7 +406,7 @@ repo.delete("rubric-id")
 Score presentations against a rubric:
 
 ```python
-from deep_brief.analysis.rubric_system import RubricScorer
+from video_analyser.analysis.rubric_system import RubricScorer
 
 scorer = RubricScorer(rubric)
 
@@ -481,22 +481,22 @@ for cat_score in result.category_scores:
 
 ```bash
 # Create a teaching rubric
-deep-brief rubric create --type teaching
+video-analyser rubric create --type teaching
 
 # List to see the ID
-deep-brief rubric list
+video-analyser rubric list
 
 # Show details
-deep-brief rubric show --id <rubric-id>
+video-analyser rubric show --id <rubric-id>
 
 # Export for sharing
-deep-brief rubric export --id <rubric-id> --output teaching-rubric.json
+video-analyser rubric export --id <rubric-id> --output teaching-rubric.json
 ```
 
 ### Example 2: Create Custom Research Rubric
 
 ```python
-from deep_brief.analysis.rubric_system import RubricBuilder, RubricRepository
+from video_analyser.analysis.rubric_system import RubricBuilder, RubricRepository
 
 builder = RubricBuilder(
     name="Research Presentation Rubric",
@@ -530,8 +530,8 @@ repo.save(rubric)
 ### Example 3: Use Rubric in Assessment
 
 ```python
-from deep_brief.reports.assessment_session import AssessmentSession
-from deep_brief.analysis.rubric_system import RubricRepository
+from video_analyser.reports.assessment_session import AssessmentSession
+from video_analyser.analysis.rubric_system import RubricRepository
 
 # Load assessment session
 session = AssessmentSession(
@@ -599,17 +599,17 @@ session.finalize()
 ## Troubleshooting
 
 **Rubric not found?**
-- Check the rubric ID: `deep-brief rubric list`
+- Check the rubric ID: `video-analyser rubric list`
 - Ensure rubric is in the `rubrics/` directory
 
 **Can't create rubric from type?**
-- Check available types: `deep-brief rubric create --type invalid` will list options
-- Try: `deep-brief rubric create --type general`
+- Check available types: `video-analyser rubric create --type invalid` will list options
+- Try: `video-analyser rubric create --type general`
 
 **Want to modify an existing rubric?**
-- Export it: `deep-brief rubric export --id <id> --output rubric.json`
+- Export it: `video-analyser rubric export --id <id> --output rubric.json`
 - Edit the JSON file
-- Delete the old: `deep-brief rubric delete --id <id>`
+- Delete the old: `video-analyser rubric delete --id <id>`
 - Re-import by placing the JSON in `rubrics/` directory
 
 ## Related Documentation

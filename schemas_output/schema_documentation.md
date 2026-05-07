@@ -1,10 +1,10 @@
-# Deep Brief Video Analysis JSON Schemas
+# Video Analyser Video Analysis JSON Schemas
 
-This document describes the JSON schemas used for video analysis results in Deep Brief.
+This document describes the JSON schemas used for video analysis results in Video Analyser.
 
 ## Overview
 
-The Deep Brief video analysis system produces structured results in JSON format.
+The Video Analyser video analysis system produces structured results in JSON format.
 These schemas ensure consistent data structure for:
 
 - API responses
@@ -14,9 +14,9 @@ These schemas ensure consistent data structure for:
 
 ## Video Analysis Result
 
-**Schema ID:** `https://deep-brief.ai/schemas/video_analysis_result.json`
+**Schema ID:** `https://video-analyser.ai/schemas/video_analysis_result.json`
 
-**Description:** JSON Schema for video_analysis_result in Deep Brief video analysis
+**Description:** JSON Schema for video_analysis_result in Video Analyser video analysis
 
 ### Properties
 
@@ -38,7 +38,7 @@ These schemas ensure consistent data structure for:
 ### Example Usage
 
 ```python
-from deep_brief.reports.analysis_schema import VideoAnalysisResult
+from video_analyser.reports.analysis_schema import VideoAnalysisResult
 
 # Validate data against schema
 result = VideoAnalysisResult.model_validate(data)
@@ -49,9 +49,9 @@ json_data = result.model_dump()
 
 ## Analysis Report
 
-**Schema ID:** `https://deep-brief.ai/schemas/analysis_report.json`
+**Schema ID:** `https://video-analyser.ai/schemas/analysis_report.json`
 
-**Description:** JSON Schema for analysis_report in Deep Brief video analysis
+**Description:** JSON Schema for analysis_report in Video Analyser video analysis
 
 ### Properties
 
@@ -71,7 +71,7 @@ json_data = result.model_dump()
 ### Example Usage
 
 ```python
-from deep_brief.reports.analysis_schema import AnalysisReport
+from video_analyser.reports.analysis_schema import AnalysisReport
 
 # Validate data against schema
 result = AnalysisReport.model_validate(data)

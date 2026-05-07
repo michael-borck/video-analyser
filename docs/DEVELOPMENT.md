@@ -1,8 +1,8 @@
-# DeepBrief Development Guide
+# Video Analyser Development Guide
 
 ## Quick Start
 
-This guide helps you get started with DeepBrief development quickly.
+This guide helps you get started with Video Analyser development quickly.
 
 ### Prerequisites
 
@@ -14,8 +14,8 @@ This guide helps you get started with DeepBrief development quickly.
 
 ```bash
 # Clone and set up everything automatically
-git clone https://github.com/michael-borck/deep-brief.git
-cd deep-brief
+git clone https://github.com/michael-borck/video-analyser.git
+cd video-analyser
 python scripts/setup_dev.py
 ```
 
@@ -31,7 +31,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv pip install -e ".[dev]"
 
 # Verify installation
-deep-brief --help
+video-analyser --help
 pytest -v
 ```
 
@@ -63,22 +63,22 @@ pytest --cov-report=html
 
 ```bash
 # Show help
-deep-brief --help
+video-analyser --help
 
 # Analyze a video
-deep-brief analyze video.mp4
+video-analyser analyze video.mp4
 
 # Use API for image captioning
-deep-brief analyze video.mp4 --use-api --api-provider anthropic
+video-analyser analyze video.mp4 --use-api --api-provider anthropic
 
 # Show configuration
-deep-brief config --all
+video-analyser config --all
 ```
 
 ## Project Structure
 
 ```
-src/deep_brief/          # Main package
+src/video_analyser/          # Main package
 ├── core/                # Video processing pipeline
 ├── analysis/            # Speech and visual analysis  
 ├── reports/             # Report generation
@@ -104,8 +104,8 @@ cp .env.example .env
 ### Config Files
 
 Default configuration in `config/config.yaml`. Override with:
-- Environment variables (prefix: `DEEP_BRIEF_`)
-- Custom config file: `deep-brief --config my-config.yaml`
+- Environment variables (prefix: `VIDEO_ANALYSER_`)
+- Custom config file: `video-analyser --config my-config.yaml`
 
 ## API Keys (Optional)
 
@@ -167,8 +167,8 @@ pytest tests/test_config.py::test_load_config -v
 ### Debug Mode
 
 ```bash
-deep-brief analyze video.mp4 --verbose
-# or set DEEP_BRIEF_DEBUG=true
+video-analyser analyze video.mp4 --verbose
+# or set VIDEO_ANALYSER_DEBUG=true
 ```
 
 ### Test Video Generation

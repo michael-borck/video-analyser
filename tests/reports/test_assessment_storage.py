@@ -4,10 +4,10 @@ import tempfile
 
 import pytest
 
-from video_lens.reports.assessment_report import (
+from video_analyser.reports.assessment_report import (
     AssessmentReport,
 )
-from video_lens.reports.assessment_storage import AssessmentStorage
+from video_analyser.reports.assessment_storage import AssessmentStorage
 
 
 class TestAssessmentStorage:

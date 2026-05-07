@@ -3,20 +3,20 @@
 import numpy as np
 import pytest
 
-from video_lens.analysis.visual_analyzer import (
+from video_analyser.analysis.visual_analyzer import (
     ExtractedFrame,
     FrameExtractor,
     FrameQualityMetrics,
     SceneFrameAnalysis,
     VisualAnalysisResult,
 )
-from video_lens.utils.config import VideoLensConfig, VisualAnalysisConfig
+from video_analyser.utils.config import VideoAnalyserConfig, VisualAnalysisConfig
 
 
 @pytest.fixture
 def mock_config():
     """Create mock configuration for testing."""
-    config = VideoLensConfig(
+    config = VideoAnalyserConfig(
         visual_analysis=VisualAnalysisConfig(
             frames_per_scene=3,
             frame_quality=85,

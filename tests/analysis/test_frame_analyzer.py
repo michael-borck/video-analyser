@@ -8,26 +8,26 @@ import cv2
 import numpy as np
 import pytest
 
-from video_lens.analysis.frame_analyzer import (
+from video_analyser.analysis.frame_analyzer import (
     FrameAnalysisPipeline,
     FrameAnalysisStep,
     PipelineMetrics,
     create_frame_analysis_pipeline,
 )
-from video_lens.analysis.visual_analyzer import (
+from video_analyser.analysis.visual_analyzer import (
     ExtractedFrame,
     SceneFrameAnalysis,
     VisualAnalysisResult,
 )
-from video_lens.core.exceptions import VideoProcessingError
-from video_lens.core.scene_detector import Scene, SceneDetectionResult
-from video_lens.utils.config import VideoLensConfig, VisualAnalysisConfig
+from video_analyser.core.exceptions import VideoProcessingError
+from video_analyser.core.scene_detector import Scene, SceneDetectionResult
+from video_analyser.utils.config import VideoAnalyserConfig, VisualAnalysisConfig
 
 
 @pytest.fixture
 def mock_config():
     """Create mock configuration for testing."""
-    config = VideoLensConfig(
+    config = VideoAnalyserConfig(
         visual_analysis=VisualAnalysisConfig(
             frames_per_scene=2,
             frame_quality=85,
@@ -51,7 +51,7 @@ def mock_config():
 @pytest.fixture
 def mock_config_minimal():
     """Create minimal configuration with only quality assessment."""
-    config = VideoLensConfig(
+    config = VideoAnalyserConfig(
         visual_analysis=VisualAnalysisConfig(
             frames_per_scene=1,
             enable_captioning=False,
@@ -573,7 +573,7 @@ class TestFrameAnalysisPipeline:
     def test_determine_content_type(self, pipeline):
         """Test content type determination."""
         # Create mock visual result with slide layout
-        from video_lens.analysis.object_detector import ObjectDetectionResult
+        from video_analyser.analysis.object_detector import ObjectDetectionResult
 
         mock_obj_result = ObjectDetectionResult(
             detected_objects=[],
@@ -677,7 +677,7 @@ class TestPipelineIntegration:
     def test_full_pipeline_workflow(self, test_video):
         """Test complete pipeline workflow."""
         # Create pipeline with all analyses enabled
-        config = VideoLensConfig(
+        config = VideoAnalyserConfig(
             visual_analysis=VisualAnalysisConfig(
                 frames_per_scene=1,
                 enable_captioning=False,  # Disable to avoid model loading

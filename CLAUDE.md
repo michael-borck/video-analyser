@@ -11,7 +11,7 @@ uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
 
 # Verify installation
-deep-brief --help
+video-analyser --help
 ```
 
 ### Code Quality (Run ALL before committing)
@@ -55,10 +55,10 @@ brew install espeak          # macOS
 
 ### Application Commands
 ```bash
-deep-brief --help            # Show all commands
-deep-brief version           # Show version
-deep-brief config --all      # Show full configuration
-deep-brief analyze           # Launch web interface (when implemented)
+video-analyser --help            # Show all commands
+video-analyser version           # Show version
+video-analyser config --all      # Show full configuration
+video-analyser analyze           # Launch web interface (when implemented)
 ```
 
 ## Architecture Overview
@@ -67,18 +67,18 @@ deep-brief analyze           # Launch web interface (when implemented)
 This is a **video analysis pipeline** application with a modular, layered architecture:
 
 **Entry Points:**
-- CLI (`src/deep_brief/cli.py`) - Typer-based command interface
-- Web UI (`src/deep_brief/interface/`) - Gradio-based web interface (planned)
+- CLI (`src/video_analyser/cli.py`) - Typer-based command interface
+- Web UI (`src/video_analyser/interface/`) - Gradio-based web interface (planned)
 
 **Processing Pipeline:**
-1. **Core** (`src/deep_brief/core/`) - Video processing, audio extraction, scene detection
-2. **Analysis** (`src/deep_brief/analysis/`) - Speech transcription, visual analysis, AI feedback
-3. **Reports** (`src/deep_brief/reports/`) - JSON/HTML report generation
+1. **Core** (`src/video_analyser/core/`) - Video processing, audio extraction, scene detection
+2. **Analysis** (`src/video_analyser/analysis/`) - Speech transcription, visual analysis, AI feedback
+3. **Reports** (`src/video_analyser/reports/`) - JSON/HTML report generation
 
 **Configuration System:**
-- Pydantic-based hierarchical configuration (`src/deep_brief/utils/config.py`)
+- Pydantic-based hierarchical configuration (`src/video_analyser/utils/config.py`)
 - YAML files with environment variable overrides
-- Nested settings: `DEEP_BRIEF_TRANSCRIPTION__MODEL=whisper-large`
+- Nested settings: `VIDEO_ANALYSER_TRANSCRIPTION__MODEL=whisper-large`
 
 ### Key Design Principles
 
@@ -120,8 +120,8 @@ This is a **video analysis pipeline** application with a modular, layered archit
 
 ### Critical Files
 
-**Configuration:** `src/deep_brief/utils/config.py` - Complete Pydantic-based config system with validation
-**CLI Entry:** `src/deep_brief/cli.py` - Main application interface
+**Configuration:** `src/video_analyser/utils/config.py` - Complete Pydantic-based config system with validation
+**CLI Entry:** `src/video_analyser/cli.py` - Main application interface
 **Task Tracking:** `tasks/tasks-prd-phase1-mvp.md` - Detailed implementation roadmap
 **Dependencies:** `pyproject.toml` - All project configuration and dependencies
 
@@ -136,7 +136,7 @@ This is a **video analysis pipeline** application with a modular, layered archit
 
 **Package Installation:** Always use `uv pip install -e ".[dev]"` for development
 **Type Checking:** Uses basedpyright (not mypy) in strict mode
-**Config Loading:** Environment variables use double underscore: `DEEP_BRIEF_PROCESSING__MAX_VIDEO_SIZE_MB`
+**Config Loading:** Environment variables use double underscore: `VIDEO_ANALYSER_PROCESSING__MAX_VIDEO_SIZE_MB`
 **Test Running:** Use pytest markers to control which tests run during development
 **Video Processing:** All samples currently use synthetic speech via espeak
 

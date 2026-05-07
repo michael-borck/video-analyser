@@ -47,8 +47,8 @@ Core principle: **Extract once, analyze many ways**
 
 ### Simple Format Lenses (Single Artifact)
 
-#### video-lens
-**Current:** `deep-brief` (being renamed)
+#### video-analyser
+**Current:** `video-analyser` (being renamed)
 
 - **Input:** Video files (mp4, mov, mkv, webm)
 - **Extraction:**
@@ -678,7 +678,7 @@ Output: Score + feedback
 ```
 Student submits: presentation.mp4
 
-video-lens extracts:
+video-analyser extracts:
   ├─ frames → image-analyzer
   ├─ audio track
   ├─ transcript → text-analyzer
@@ -705,7 +705,7 @@ accessibility-analyzer:
 grading-lens applies rubric:
   ├─ Content delivery (text-analyzer on transcript)
   ├─ Visual quality (image-analyzer on frames)
-  ├─ Pacing/structure (video-lens metrics)
+  ├─ Pacing/structure (video-analyser metrics)
   ├─ Audio quality (audio-analyzer)
   └─ Accessibility (accessibility-analyzer)
 
@@ -790,7 +790,7 @@ Student submits: portfolio/ with:
 assessment-bench:
 1. Detects file types
 2. Routes each to appropriate lens:
-   ├─ presentation.mp4 → video-lens
+   ├─ presentation.mp4 → video-analyser
    ├─ analysis.pdf → document-lens
    ├─ code.py → code-lens
    └─ screenshots/ → image-lens
@@ -816,7 +816,7 @@ Output: Overall score + per-component feedback
 **Goal:** Establish architecture and implement core lenses for primary use case
 
 **Implement:**
-- ✅ `video-lens` (already complete as deep-brief → video-lens)
+- ✅ `video-analyser` (already complete as video-analyser → video-analyser)
 - ✅ `code-lens` (python module, basic)
 - `text-analyzer`
 - `grading-lens` (basic rubric support)
@@ -828,7 +828,7 @@ Output: Overall score + per-component feedback
 **Test with:** Student video presentation submissions
 
 **Deliverable:**
-- Clear, working flow: video submission → video-lens → text-analyzer → grading-lens → score + feedback
+- Clear, working flow: video submission → video-analyser → text-analyzer → grading-lens → score + feedback
 
 ---
 
@@ -913,7 +913,7 @@ Output: Overall score + per-component feedback
 ## Key Design Decisions
 
 ### 1. Lens Granularity
-- **One lens per format** (video-lens, audio-lens, document-lens, etc.)
+- **One lens per format** (video-analyser, audio-lens, document-lens, etc.)
 - **Not** one lens per file type (pptx handled by slide-lens, not separate pptx-lens)
 - **Composite lenses** (repo-lens) orchestrate and delegate
 
@@ -929,7 +929,7 @@ Output: Overall score + per-component feedback
 - Enables swapping implementations without breaking analyzers/grading
 
 ### 4. Delegation vs. Composition
-- **Simple delegation:** video-lens calls text-analyzer on transcript
+- **Simple delegation:** video-analyser calls text-analyzer on transcript
 - **Orchestration:** repo-lens discovers files, routes each to appropriate lens
 - Clear pattern for adding new complexity
 
@@ -943,7 +943,7 @@ Output: Overall score + per-component feedback
 ## Technology Stack (Suggested)
 
 ### Lens Implementations
-- **video-lens:** FFmpeg, Whisper (transcription), OpenCV (frame analysis)
+- **video-analyser:** FFmpeg, Whisper (transcription), OpenCV (frame analysis)
 - **audio-lens:** Whisper, librosa, pyannote (speaker diarization)
 - **image-lens:** PIL, OpenCV, Tesseract (OCR), YOLO (object detection)
 - **document-lens:** PyPDF, python-docx, markdown, pypandoc

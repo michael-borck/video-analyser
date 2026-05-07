@@ -13,7 +13,7 @@ Both modules (`speaker_diarization.py` and `rubric_system.py`) are **well-struct
 **How It Would Be Called:**
 ```python
 # From pipeline_coordinator.py (not yet implemented)
-from deep_brief.analysis.speaker_diarization import SpeakerDiarizer
+from video_analyser.analysis.speaker_diarization import SpeakerDiarizer
 
 # During speech analysis phase:
 diarizer = SpeakerDiarizer(config=config, use_gpu=config.system.use_gpu)
@@ -40,7 +40,7 @@ for segment in transcription_result.segments:
 **How It Would Be Called:**
 ```python
 # From reports or evaluation interface (not yet implemented)
-from deep_brief.analysis.rubric_system import RubricScorer, RubricRepository
+from video_analyser.analysis.rubric_system import RubricScorer, RubricRepository
 
 # Load or create rubric
 repo = RubricRepository(Path("rubrics/"))
@@ -117,7 +117,7 @@ huggingface-cli login
 
 **Missing Settings:**
 ```python
-# Should be added to DeepBriefConfig or AnalysisConfig:
+# Should be added to Video AnalyserConfig or AnalysisConfig:
 class DiarizationConfig(BaseModel):
     """Speaker diarization configuration."""
     
@@ -142,7 +142,7 @@ class DiarizationConfig(BaseModel):
 
 **Missing Settings:**
 ```python
-# Should be added to DeepBriefConfig:
+# Should be added to Video AnalyserConfig:
 class RubricConfig(BaseModel):
     """Rubric evaluation configuration."""
     
@@ -494,8 +494,8 @@ weighted_sum += cat_score.category_total * category.weight
 
 ### Phase 1: Configuration Integration
 ```
-[ ] Add DiarizationConfig to DeepBriefConfig
-[ ] Add RubricConfig to DeepBriefConfig
+[ ] Add DiarizationConfig to Video AnalyserConfig
+[ ] Add RubricConfig to Video AnalyserConfig
 [ ] Document environment variable overrides
 [ ] Add example .env entries
 [ ] Update CLAUDE.md with configuration examples
@@ -619,7 +619,7 @@ weighted_sum += cat_score.category_total * category.weight
 ### For Speaker Diarization to Work:
 
 ```bash
-# 1. Install base deep-brief with development setup
+# 1. Install base video-analyser with development setup
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
 
@@ -639,11 +639,11 @@ python -c "from pyannote.audio import Pipeline; print('OK')"
 
 ```bash
 # Already included - no additional installation needed
-# Just ensure deep-brief is installed with development setup
+# Just ensure video-analyser is installed with development setup
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
 
 # Test
-python -c "from deep_brief.analysis.rubric_system import Rubric; print('OK')"
+python -c "from video_analyser.analysis.rubric_system import Rubric; print('OK')"
 ```
 

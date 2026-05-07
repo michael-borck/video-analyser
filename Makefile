@@ -1,10 +1,10 @@
-# DeepBrief Development Makefile
+# Video Analyser Development Makefile
 
 .PHONY: help install setup test lint format type-check clean run dev
 
 # Default target
 help:
-	@echo "DeepBrief Development Commands"
+	@echo "Video Analyser Development Commands"
 	@echo ""
 	@echo "Setup & Installation:"
 	@echo "  setup      - Set up development environment"
@@ -43,15 +43,15 @@ install:
 # Development
 dev:
 	@echo "🔧 Running in development mode..."
-	uv run deep-brief --help
+	uv run video-analyser --help
 
 run:
-	@echo "🎬 Running DeepBrief CLI..."
-	uv run deep-brief
+	@echo "🎬 Running Video Analyser CLI..."
+	uv run video-analyser
 
 web:
 	@echo "🌐 Launching web interface..."
-	uv run python -m deep_brief.interface.gradio_app
+	uv run python -m video_analyser.interface.gradio_app
 
 # Code Quality
 format:
@@ -100,7 +100,7 @@ videos:
 
 config:
 	@echo "⚙️ Showing configuration..."
-	uv run deep-brief config --all
+	uv run video-analyser config --all
 
 # Quick development workflow
 dev-check: format lint type-check test-fast

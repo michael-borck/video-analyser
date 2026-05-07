@@ -4,15 +4,15 @@ import tempfile
 
 import pytest
 
-from video_lens.analysis.rubric_system import (
+from video_analyser.analysis.rubric_system import (
     RubricBuilder,
 )
-from video_lens.analysis.speaker_diarization import (
+from video_analyser.analysis.speaker_diarization import (
     DiarizationResult,
     SpeakerProfile,
     SpeakerSegment,
 )
-from video_lens.reports.assessment_session import AssessmentSession
+from video_analyser.reports.assessment_session import AssessmentSession
 
 
 class TestAssessmentSession:

@@ -9,9 +9,9 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from video_lens.analysis.transcriber import Segment, TranscriptionResult
-from video_lens.core.scene_detector import SceneDetectionResult
-from video_lens.utils.config import get_config
+from video_analyser.analysis.transcriber import Segment, TranscriptionResult
+from video_analyser.core.scene_detector import SceneDetectionResult
+from video_analyser.utils.config import get_config
 
 logger = logging.getLogger(__name__)
 

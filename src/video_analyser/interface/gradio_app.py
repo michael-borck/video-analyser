@@ -1,4 +1,4 @@
-"""Gradio web interface for Video Lens video analysis."""
+"""Gradio web interface for Video Analyser video analysis."""
 
 import logging
 from pathlib import Path
@@ -6,9 +6,9 @@ from typing import Any
 
 import gradio as gr  # type: ignore[import-untyped]
 
-from video_lens.core.pipeline_coordinator import PipelineCoordinator
-from video_lens.utils.config import get_config
-from video_lens.utils.progress_display import CLIProgressTracker
+from video_analyser.core.pipeline_coordinator import PipelineCoordinator
+from video_analyser.utils.config import get_config
+from video_analyser.utils.progress_display import CLIProgressTracker
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +124,7 @@ class GradioInterface:
     def create_interface(self) -> gr.Blocks:
         """Create the Gradio interface."""
         with gr.Blocks(
-            title="DeepBrief Video Analysis",
+            title="Video Analyser Video Analysis",
             theme=gr.themes.Soft(),  # type: ignore[attr-defined]
             css="""
             .gradio-container {
@@ -146,7 +146,7 @@ class GradioInterface:
             # Header
             gr.HTML("""
             <div class="main-header">
-                <h1>🎥 DeepBrief</h1>
+                <h1>🎥 Video Analyser</h1>
                 <p>Video Analysis for Presentation Feedback</p>
             </div>
             """)
@@ -225,8 +225,8 @@ class GradioInterface:
             # Footer
             gr.HTML("""
             <div style="text-align: center; margin-top: 2rem; color: #666;">
-                <p>Video Lens v0.5.0 - Video Analysis Lens for Modular Assessment</p>
-                <p><a href="https://github.com/michaelborck-education/video-lens" target="_blank">GitHub</a></p>
+                <p>Video Analyser v0.6.0 - Video Analysis Tool for the Analyser Family</p>
+                <p><a href="https://github.com/michaelborck-education/video-analyser" target="_blank">GitHub</a></p>
             </div>
             """)
 

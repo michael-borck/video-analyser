@@ -12,7 +12,7 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from video_lens.core.progress_tracker import ProgressTracker
+from video_analyser.core.progress_tracker import ProgressTracker
 
 console = Console()
 

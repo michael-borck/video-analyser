@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Development setup script for DeepBrief.
+Development setup script for Video Analyser.
 
 This script sets up the development environment, installs dependencies,
 and verifies the installation.
@@ -28,7 +28,7 @@ def run_command(cmd: list[str], description: str) -> bool:
 
 def main() -> None:
     """Set up development environment."""
-    print("🚀 Setting up DeepBrief development environment...\n")
+    print("🚀 Setting up Video Analyser development environment...\n")
 
     # Check if we're in the right directory
     if not Path("pyproject.toml").exists():
@@ -70,7 +70,7 @@ def main() -> None:
                 "run",
                 "python",
                 "-c",
-                "import deep_brief; print('✅ Package imports successfully')",
+                "import video_analyser; print('✅ Package imports successfully')",
             ],
             capture_output=True,
             text=True,
@@ -82,7 +82,7 @@ def main() -> None:
 
         # Try CLI command
         result = subprocess.run(
-            ["uv", "run", "deep-brief", "--help"], capture_output=True, text=True
+            ["uv", "run", "video-analyser", "--help"], capture_output=True, text=True
         )
         if result.returncode == 0:
             print("✅ CLI command works")
@@ -110,7 +110,7 @@ def main() -> None:
     print("\n📋 Next steps:")
     print("   1. Activate the environment: source .venv/bin/activate")
     print("   2. Run tests: pytest -v")
-    print("   3. Try the CLI: deep-brief --help")
+    print("   3. Try the CLI: video-analyser --help")
     print("   4. Check code quality: ruff format . && ruff check . && basedpyright")
     print("\n💡 Tip: Add your API keys to .env for full functionality")
 

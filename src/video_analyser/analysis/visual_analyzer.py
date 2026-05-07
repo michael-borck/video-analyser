@@ -13,17 +13,17 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel
 
-from video_lens.analysis.error_handling import (
+from video_analyser.analysis.error_handling import (
     ErrorRecoveryContext,
     handle_corrupt_frame,
     validate_image,
 )
-from video_lens.analysis.image_captioner import CaptionResult, ImageCaptioner
-from video_lens.analysis.object_detector import ObjectDetectionResult, ObjectDetector
-from video_lens.analysis.ocr_detector import OCRDetector, OCRResult
-from video_lens.core.exceptions import ErrorCode, VideoProcessingError
-from video_lens.core.scene_detector import SceneDetectionResult
-from video_lens.utils.config import get_config
+from video_analyser.analysis.image_captioner import CaptionResult, ImageCaptioner
+from video_analyser.analysis.object_detector import ObjectDetectionResult, ObjectDetector
+from video_analyser.analysis.ocr_detector import OCRDetector, OCRResult
+from video_analyser.core.exceptions import ErrorCode, VideoProcessingError
+from video_analyser.core.scene_detector import SceneDetectionResult
+from video_analyser.utils.config import get_config
 
 logger = logging.getLogger(__name__)
 

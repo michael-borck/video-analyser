@@ -1,10 +1,10 @@
-# Video Lens
+# Video Analyser
 
 <!-- BADGES:START -->
 [![ai-feedback](https://img.shields.io/badge/-ai--feedback-blue?style=flat-square)](https://github.com/topics/ai-feedback) [![cli-tool](https://img.shields.io/badge/-cli--tool-blue?style=flat-square)](https://github.com/topics/cli-tool) [![computer-vision](https://img.shields.io/badge/-computer--vision-blue?style=flat-square)](https://github.com/topics/computer-vision) [![python](https://img.shields.io/badge/-python-3776ab?style=flat-square)](https://github.com/topics/python) [![speech-recognition](https://img.shields.io/badge/-speech--recognition-blue?style=flat-square)](https://github.com/topics/speech-recognition) [![video-analysis](https://img.shields.io/badge/-video--analysis-blue?style=flat-square)](https://github.com/topics/video-analysis) [![web-application](https://img.shields.io/badge/-web--application-blue?style=flat-square)](https://github.com/topics/web-application) [![presentation-analysis](https://img.shields.io/badge/-presentation--analysis-blue?style=flat-square)](https://github.com/topics/presentation-analysis) [![edtech](https://img.shields.io/badge/-edtech-4caf50?style=flat-square)](https://github.com/topics/edtech) [![ffmpeg](https://img.shields.io/badge/-ffmpeg-blue?style=flat-square)](https://github.com/topics/ffmpeg)
 <!-- BADGES:END -->
 
-[![PyPI version](https://badge.fury.io/py/video-lens.svg)](https://pypi.org/project/video-lens/)
+[![PyPI version](https://badge.fury.io/py/video-analyser.svg)](https://pypi.org/project/video-analyser/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -30,7 +30,7 @@ A video analysis application that helps students, educators, and professionals a
 ### Option 1: Install from PyPI (recommended for users)
 
 ```bash
-pip install video-lens
+pip install video-analyser
 ```
 
 ### Option 2: Install from source (for development)
@@ -40,8 +40,8 @@ pip install video-lens
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone the repository
-git clone https://github.com/michael-borck/video-lens.git
-cd video-lens
+git clone https://github.com/michael-borck/video-analyser.git
+cd video-analyser
 
 # Create virtual environment and install
 uv venv
@@ -68,16 +68,16 @@ Download from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.htm
 
 ```bash
 # Show available commands
-video-lens --help
+video-analyser --help
 
 # Check version
-video-lens version
+video-analyser version
 
 # Launch web interface (coming soon)
-video-lens analyze
+video-analyser analyze
 
 # Analyze a specific video (CLI mode - coming soon)
-video-lens analyze video.mp4 --output ./reports
+video-analyser analyze video.mp4 --output ./reports
 ```
 
 **Current Status**: The CLI framework is complete. Video processing features are in active development.
@@ -96,13 +96,13 @@ This project uses modern Python tooling and follows strict quality standards:
 
 ```bash
 # Clone and setup
-git clone https://github.com/michael-borck/video-lens.git
-cd video-lens
+git clone https://github.com/michael-borck/video-analyser.git
+cd video-analyser
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
 
 # Verify setup
-video-lens --help
+video-analyser --help
 pytest -v
 ```
 
@@ -128,7 +128,7 @@ ruff format . && ruff check . && basedpyright && pytest -v
 ### Project Structure
 
 ```
-src/video_lens/          # Main package
+src/video_analyser/          # Main package
 ├── core/                # Video processing pipeline
 ├── analysis/            # Speech and visual analysis
 ├── reports/             # Report generation
@@ -152,8 +152,8 @@ See `tasks/tasks-prd-phase1-mvp.md` for detailed task tracking.
 
 ## Links
 
-- **PyPI**: https://pypi.org/project/video-lens/
-- **GitHub**: https://github.com/michael-borck/video-lens
+- **PyPI**: https://pypi.org/project/video-analyser/
+- **GitHub**: https://github.com/michael-borck/video-analyser
 - **Documentation**: Coming soon
 
 ## License

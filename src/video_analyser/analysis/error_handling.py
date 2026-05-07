@@ -18,7 +18,7 @@ from cv2.typing import MatLike
 from numpy.typing import NDArray
 from PIL import Image
 
-from video_lens.core.exceptions import ErrorCode, VideoProcessingError
+from video_analyser.core.exceptions import ErrorCode, VideoProcessingError
 
 logger = logging.getLogger(__name__)
 

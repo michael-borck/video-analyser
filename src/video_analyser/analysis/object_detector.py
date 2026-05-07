@@ -17,13 +17,13 @@ from numpy.typing import NDArray
 from PIL import Image
 from pydantic import BaseModel
 
-from video_lens.analysis.error_handling import (
+from video_analyser.analysis.error_handling import (
     ModelInitializationError,
     handle_corrupt_frame,
     validate_image,
     with_retry,
 )
-from video_lens.utils.config import get_config
+from video_analyser.utils.config import get_config
 
 logger = logging.getLogger(__name__)
 

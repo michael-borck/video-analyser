@@ -11,19 +11,19 @@ from unittest.mock import MagicMock, patch
 import ffmpeg
 import pytest
 
-from video_lens.core.audio_extractor import AudioExtractor, AudioInfo
-from video_lens.core.exceptions import (
+from video_analyser.core.audio_extractor import AudioExtractor, AudioInfo
+from video_analyser.core.exceptions import (
     AudioProcessingError,
     ErrorCode,
 )
-from video_lens.core.video_processor import VideoInfo
-from video_lens.utils.config import AudioConfig, VideoLensConfig, ProcessingConfig
+from video_analyser.core.video_processor import VideoInfo
+from video_analyser.utils.config import AudioConfig, VideoAnalyserConfig, ProcessingConfig
 
 
 @pytest.fixture
 def mock_config():
     """Create a mock configuration for testing."""
-    config = VideoLensConfig(
+    config = VideoAnalyserConfig(
         processing=ProcessingConfig(
             temp_dir=Path(tempfile.mkdtemp()), cleanup_temp_files=True
         ),

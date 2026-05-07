@@ -1,4 +1,4 @@
-"""Video processing pipeline for DeepBrief."""
+"""Video processing pipeline for Video Analyser."""
 
 # NOTE: ffmpeg-python library lacks comprehensive type annotations
 # See: https://github.com/kkroening/ffmpeg-python/issues/247
@@ -15,14 +15,14 @@ from typing import Any
 import ffmpeg
 from pydantic import BaseModel
 
-from video_lens.core.exceptions import (
+from video_analyser.core.exceptions import (
     ErrorCode,
     FileValidationError,
     FrameExtractionError,
     VideoProcessingError,
     handle_ffmpeg_error,
 )
-from video_lens.utils.config import get_config
+from video_analyser.utils.config import get_config
 
 logger = logging.getLogger(__name__)
 

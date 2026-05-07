@@ -2117,7 +2117,7 @@
       "type": "object"
     }
   },
-  "description": "JSON Schema for analysis_report in Deep Brief video analysis",
+  "description": "JSON Schema for analysis_report in Video Analyser video analysis",
   "properties": {
     "analysis_result": {
       "$ref": "#/$defs/VideoAnalysisResult",
@@ -2209,5 +2209,5 @@
   "title": "Analysis Report",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://deep-brief.ai/schemas/analysis_report.json"
+  "$id": "https://video-analyser.ai/schemas/analysis_report.json"
 }

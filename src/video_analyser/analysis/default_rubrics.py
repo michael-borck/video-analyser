@@ -1,6 +1,6 @@
 """Default example rubrics for common presentation types."""
 
-from video_lens.analysis.rubric_system import Rubric, RubricBuilder
+from video_analyser.analysis.rubric_system import Rubric, RubricBuilder
 
 
 def create_academic_presentation_rubric() -> Rubric:

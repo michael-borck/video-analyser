@@ -14,13 +14,13 @@ import torch
 from faster_whisper import WhisperModel
 from pydantic import BaseModel
 
-from video_lens.core.audio_extractor import AudioInfo
-from video_lens.core.exceptions import (
+from video_analyser.core.audio_extractor import AudioInfo
+from video_analyser.core.exceptions import (
     AudioProcessingError,
     ErrorCode,
     VideoProcessingError,
 )
-from video_lens.utils.config import get_config
+from video_analyser.utils.config import get_config
 
 logger = logging.getLogger(__name__)
 

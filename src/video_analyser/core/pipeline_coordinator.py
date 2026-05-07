@@ -6,28 +6,28 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from video_lens.analysis.frame_analyzer import (
+from video_analyser.analysis.frame_analyzer import (
     ExtractedFrame,
     FrameAnalysisPipeline,
 )
-from video_lens.analysis.speech_analyzer import SpeechAnalyzer
-from video_lens.analysis.transcriber import WhisperTranscriber
-from video_lens.core.audio_extractor import AudioExtractor, AudioInfo
-from video_lens.core.exceptions import (
+from video_analyser.analysis.speech_analyzer import SpeechAnalyzer
+from video_analyser.analysis.transcriber import WhisperTranscriber
+from video_analyser.core.audio_extractor import AudioExtractor, AudioInfo
+from video_analyser.core.exceptions import (
     AudioProcessingError,
     ErrorCode,
     VideoProcessingError,
     get_user_friendly_message,
 )
-from video_lens.core.progress_tracker import (
+from video_analyser.core.progress_tracker import (
     CompositeProgressTracker,
     ProgressTracker,
 )
-from video_lens.core.scene_detector import Scene, SceneDetectionResult, SceneDetector
-from video_lens.core.video_processor import FrameInfo, VideoInfo, VideoProcessor
-from video_lens.reports.html_renderer import HTMLRenderer
-from video_lens.reports.report_generator import ReportGenerator
-from video_lens.utils.config import get_config
+from video_analyser.core.scene_detector import Scene, SceneDetectionResult, SceneDetector
+from video_analyser.core.video_processor import FrameInfo, VideoInfo, VideoProcessor
+from video_analyser.reports.html_renderer import HTMLRenderer
+from video_analyser.reports.report_generator import ReportGenerator
+from video_analyser.utils.config import get_config
 
 logger = logging.getLogger(__name__)
 

@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "video-lens"
-version = "0.5.17"
-description = "Video analysis lens for the modular assessment platform - extracts frames, transcripts, and quality metrics"
+name = "video-analyser"
+version = "0.6.0"
+description = "Video analysis tool — extracts frames, transcripts, and quality metrics for the analyser family"
 authors = [{name = "Michael Borck", email = "michael@example.com"}]
 readme = "README.md"
 requires-python = ">=3.11"
@@ -94,10 +94,10 @@ api = [
 ]
 
 [project.scripts]
-video-lens = "video_lens.cli:main"
+video-analyser = "video_analyser.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/video_lens"]
+packages = ["src/video_analyser"]
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -161,7 +161,7 @@ addopts = [
     "--strict-markers",
     "--strict-config",
     "--verbose",
-    "--cov=src/deep_brief",
+    "--cov=src/video_analyser",
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-fail-under=0",  # Will increase as we add actual code

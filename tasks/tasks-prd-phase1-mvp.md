@@ -4,54 +4,54 @@ Based on the PRD for Phase 1 MVP, here are the detailed tasks required to implem
 
 ## Relevant Files
 
-- `src/deep_brief/core/video_processor.py` - VideoProcessor class with file validation, format support (MP4, MOV, AVI, WebM), and frame extraction
+- `src/video_analyser/core/video_processor.py` - VideoProcessor class with file validation, format support (MP4, MOV, AVI, WebM), and frame extraction
 - `tests/core/test_video_processor.py` - Comprehensive unit tests for VideoProcessor class
 - `tests/core/test_frame_extraction.py` - Unit tests for frame extraction functionality
 - `tests/core/test_integration_frame_scene.py` - Integration tests for frame extraction with scene detection
-- `src/deep_brief/core/audio_extractor.py` - Audio extraction using ffmpeg with 16kHz sample rate conversion and preprocessing
+- `src/video_analyser/core/audio_extractor.py` - Audio extraction using ffmpeg with 16kHz sample rate conversion and preprocessing
 - `tests/core/test_audio_extractor.py` - Comprehensive unit tests for AudioExtractor class with progress tracking
-- `src/deep_brief/core/scene_detector.py` - Scene detection using ffmpeg scene filter with threshold and adaptive methods, plus fallback intervals
+- `src/video_analyser/core/scene_detector.py` - Scene detection using ffmpeg scene filter with threshold and adaptive methods, plus fallback intervals
 - `tests/core/test_scene_detector.py` - Comprehensive unit tests for SceneDetector class with multiple detection methods
-- `src/deep_brief/core/progress_tracker.py` - Comprehensive progress tracking system with ProgressTracker, CompositeProgressTracker, and callback support
+- `src/video_analyser/core/progress_tracker.py` - Comprehensive progress tracking system with ProgressTracker, CompositeProgressTracker, and callback support
 - `tests/core/test_progress_tracker.py` - Comprehensive unit tests for progress tracking system (32 tests)
-- `src/deep_brief/core/pipeline_coordinator.py` - Pipeline orchestration system with PipelineCoordinator for complete video analysis workflows
+- `src/video_analyser/core/pipeline_coordinator.py` - Pipeline orchestration system with PipelineCoordinator for complete video analysis workflows
 - `tests/core/test_pipeline_coordinator.py` - Comprehensive unit tests for pipeline coordinator (22 tests)
-- `src/deep_brief/core/exceptions.py` - Comprehensive error handling system with 42 error codes and custom exception hierarchy
+- `src/video_analyser/core/exceptions.py` - Comprehensive error handling system with 42 error codes and custom exception hierarchy
 - `tests/core/test_error_handling.py` - Comprehensive unit tests for error handling system (25 tests)
 - `tests/core/test_video_processing_enhanced.py` - Enhanced comprehensive tests for VideoProcessor (26 tests, 86% coverage)
 - `tests/core/test_audio_extraction_enhanced.py` - Enhanced comprehensive tests for AudioExtractor (29 tests)
-- `src/deep_brief/analysis/transcriber.py` - Complete Whisper-based speech-to-text implementation with word-level timestamps (181 lines, 93% coverage)
+- `src/video_analyser/analysis/transcriber.py` - Complete Whisper-based speech-to-text implementation with word-level timestamps (181 lines, 93% coverage)
 - `tests/analysis/test_transcriber.py` - Comprehensive unit tests for transcription functionality (27 tests)
-- `src/deep_brief/analysis/speech_analyzer.py` - Complete speech analysis system with WPM calculations and filler word detection (203 lines, 100% coverage)
+- `src/video_analyser/analysis/speech_analyzer.py` - Complete speech analysis system with WPM calculations and filler word detection (203 lines, 100% coverage)
 - `tests/analysis/test_speech_analyzer.py` - Comprehensive unit tests for speech analysis functionality (42 tests)
 - `tests/analysis/test_speech_analyzer_comprehensive.py` - Additional comprehensive tests for edge cases, performance, and error handling (15 tests, 98% coverage)
-- `src/deep_brief/analysis/visual_analyzer.py` - Complete frame extraction system with quality assessment (blur, contrast, lighting) and filtering (316 lines, 84% coverage)
+- `src/video_analyser/analysis/visual_analyzer.py` - Complete frame extraction system with quality assessment (blur, contrast, lighting) and filtering (316 lines, 84% coverage)
 - `tests/analysis/test_visual_analyzer.py` - Comprehensive unit tests for visual analysis functionality (29 tests)
-- `src/deep_brief/analysis/image_captioner.py` - Complete image captioning system using BLIP-2 models with device management (408 lines, 17% coverage)
+- `src/video_analyser/analysis/image_captioner.py` - Complete image captioning system using BLIP-2 models with device management (408 lines, 17% coverage)
 - `tests/analysis/test_image_captioner.py` - Comprehensive unit tests for image captioning functionality (29 tests)
-- `src/deep_brief/analysis/ocr_detector.py` - Complete OCR text detection system using Tesseract/EasyOCR with text analysis (531 lines, 92% coverage)
+- `src/video_analyser/analysis/ocr_detector.py` - Complete OCR text detection system using Tesseract/EasyOCR with text analysis (531 lines, 92% coverage)
 - `tests/analysis/test_ocr_detector.py` - Comprehensive unit tests for OCR detection functionality (28 tests)
-- `src/deep_brief/analysis/object_detector.py` - Object detection system for identifying presentation elements (slides, charts, text blocks, etc.)
+- `src/video_analyser/analysis/object_detector.py` - Object detection system for identifying presentation elements (slides, charts, text blocks, etc.)
 - `tests/analysis/test_object_detector.py` - Comprehensive unit tests for object detection functionality (24 tests)
 - `tests/analysis/test_visual_analyzer_object_detection.py` - Integration tests for object detection with visual analyzer (10 tests)
-- `src/deep_brief/analysis/frame_analyzer.py` - Unified frame analysis pipeline orchestrating all visual analysis components
+- `src/video_analyser/analysis/frame_analyzer.py` - Unified frame analysis pipeline orchestrating all visual analysis components
 - `tests/analysis/test_frame_analyzer.py` - Comprehensive unit tests for frame analysis pipeline (19 tests)
-- `src/deep_brief/analysis/error_handling.py` - Comprehensive error handling utilities for visual analysis (image validation, retry decorators, error recovery)
+- `src/video_analyser/analysis/error_handling.py` - Comprehensive error handling utilities for visual analysis (image validation, retry decorators, error recovery)
 - `tests/analysis/test_error_handling.py` - Unit tests for error handling functionality (32 tests, 92% coverage)
 - `tests/analysis/test_visual_analysis_integration.py` - Integration tests for visual analysis pipeline with all components
 - `tests/analysis/test_visual_analysis_edge_cases.py` - Edge case tests for visual analysis components
 - `tests/analysis/test_visual_analysis_error_scenarios.py` - Error scenario tests for model loading and component failures
-- `src/deep_brief/reports/analysis_schema.py` - Comprehensive JSON schema definitions for structured video analysis results using Pydantic models
-- `src/deep_brief/reports/schema_generator.py` - JSON schema generator and documentation utilities for video analysis data structures
+- `src/video_analyser/reports/analysis_schema.py` - Comprehensive JSON schema definitions for structured video analysis results using Pydantic models
+- `src/video_analyser/reports/schema_generator.py` - JSON schema generator and documentation utilities for video analysis data structures
 - `tests/reports/test_analysis_schema.py` - Comprehensive unit tests for analysis schema definitions (47 tests, 96% coverage)
 - `tests/reports/test_schema_generator.py` - Unit tests for schema generator functionality (schema validation, documentation generation)
 - `schemas_output/schemas/video_analysis_result.json` - Generated JSON Schema for VideoAnalysisResult with complete validation rules
 - `schemas_output/schemas/analysis_report.json` - Generated JSON Schema for AnalysisReport with metadata and formatting options
 - `schemas_output/schema_documentation.md` - Human-readable documentation for all JSON schemas with usage examples
-- `src/deep_brief/reports/report_generator.py` - Complete ReportGenerator class for assembling analysis data into structured reports (476 lines, 84% coverage)
+- `src/video_analyser/reports/report_generator.py` - Complete ReportGenerator class for assembling analysis data into structured reports (476 lines, 84% coverage)
 - `tests/reports/test_report_generator.py` - Comprehensive unit tests for ReportGenerator functionality (23 tests, 19 passed)
-- `src/deep_brief/reports/html_renderer.py` - Complete HTML report rendering system with Jinja2 templates and custom styling (144 lines, 91% coverage)
-- `src/deep_brief/reports/templates/analysis_report.html` - Professional HTML template with embedded Chart.js visualizations, enhanced scene-by-scene breakdown, and responsive design
+- `src/video_analyser/reports/html_renderer.py` - Complete HTML report rendering system with Jinja2 templates and custom styling (144 lines, 91% coverage)
+- `src/video_analyser/reports/templates/analysis_report.html` - Professional HTML template with embedded Chart.js visualizations, enhanced scene-by-scene breakdown, and responsive design
 - `tests/reports/test_html_renderer.py` - Comprehensive unit tests for HTML rendering functionality (27 tests, 100% passed)
 - `tests/reports/test_scene_breakdown.py` - Comprehensive unit tests for scene-by-scene breakdown functionality (7 tests, 100% passed)
 - `src/interface/gradio_app.py` - Main Gradio web interface implementation

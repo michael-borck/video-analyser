@@ -1,9 +1,9 @@
-# Video Lens Configuration File
-# This file contains the default configuration for the Video Lens application.
-# You can override these settings with environment variables using the VIDEO_LENS_ prefix.
+# Video Analyser Configuration File
+# This file contains the default configuration for the Video Analyser application.
+# You can override these settings with environment variables using the VIDEO_ANALYSER_ prefix.
 
 # Application settings
-app_name: "Video Lens"
+app_name: "Video Analyser"
 debug: false
 
 # Video processing configuration
@@ -67,7 +67,7 @@ logging:
   level: "INFO"                # DEBUG, INFO, WARNING, ERROR, CRITICAL
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
   file_enabled: true
-  file_path: "logs/deep_brief.log"
+  file_path: "logs/video_analyser.log"
   max_bytes: 10000000          # 10MB log file size
   backup_count: 5              # number of backup files
   console_enabled: true

@@ -1,6 +1,6 @@
 """Tests for assessment report module."""
 
-from video_lens.reports.assessment_report import (
+from video_analyser.reports.assessment_report import (
     AssessmentDiarizationSegment,
     AssessmentReport,
     AssessmentSpeakerProfile,

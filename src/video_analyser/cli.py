@@ -1,4 +1,4 @@
-"""Command-line interface for Video Lens."""
+"""Command-line interface for Video Analyser."""
 
 import hashlib
 import json
@@ -13,16 +13,16 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from video_lens.core.exceptions import VideoProcessingError
-from video_lens.core.pipeline_coordinator import PipelineCoordinator
-from video_lens.utils.config import VideoLensConfig, get_config, load_config
-from video_lens.utils.progress_display import CLIProgressTracker
+from video_analyser.core.exceptions import VideoProcessingError
+from video_analyser.core.pipeline_coordinator import PipelineCoordinator
+from video_analyser.utils.config import VideoAnalyserConfig, get_config, load_config
+from video_analyser.utils.progress_display import CLIProgressTracker
 
 if TYPE_CHECKING:
-    from video_lens.analysis.rubric_system import RubricRepository
+    from video_analyser.analysis.rubric_system import RubricRepository
 
 console = Console()
-app = typer.Typer(help="Video Lens - Video Analysis Application")
+app = typer.Typer(help="Video Analyser - Video Analysis Application")
 
 
 @app.command()
@@ -109,11 +109,11 @@ def analyze(
     If no video path is provided, launches the web interface.
 
     Examples:
-        video-lens analyze video.mp4
-        video-lens analyze video.mp4 --grade
-        video-lens analyze video.mp4 --grade --rubric-type academic --feedback-detail long
-        video-lens analyze video.mp4 --rubric-type academic --feedback-audience teacher
-        video-lens analyze video.mp4 --rubric-file my-rubric.json --api-provider anthropic
+        video-analyser analyze video.mp4
+        video-analyser analyze video.mp4 --grade
+        video-analyser analyze video.mp4 --grade --rubric-type academic --feedback-detail long
+        video-analyser analyze video.mp4 --rubric-type academic --feedback-audience teacher
+        video-analyser analyze video.mp4 --rubric-file my-rubric.json --api-provider anthropic
     """
     # Load configuration
     config = load_config(config_file) if config_file else get_config()
@@ -127,10 +127,10 @@ def analyze(
         config.visual_analysis.api_model = api_model
 
     # Set up logging
-    logger = logging.getLogger("video_lens")
+    logger = logging.getLogger("video_analyser")
     if verbose:
         logging.basicConfig(level=logging.DEBUG)
-    logger.info("Starting Video Lens analysis")
+    logger.info("Starting Video Analyser analysis")
 
     console.print(
         Panel.fit(
@@ -185,7 +185,7 @@ def analyze(
 def _analyze_video_cli(
     video_path: Path,
     output_dir: Path | None,
-    config: VideoLensConfig,
+    config: VideoAnalyserConfig,
     config_file: Path | None = None,
     verbose: bool = False,
     logger: logging.Logger = None,
@@ -433,8 +433,8 @@ def _analyze_video_cli(
         if effective_rubric_type or rubric_file:
             console.print("\n[bold cyan]Generating grading feedback...[/bold cyan]")
             try:
-                from video_lens.analysis.default_rubrics import get_default_rubric
-                from video_lens.analysis.rubric_system import Rubric
+                from video_analyser.analysis.default_rubrics import get_default_rubric
+                from video_analyser.analysis.rubric_system import Rubric
 
                 # Load rubric
                 if effective_rubric_type:
@@ -555,9 +555,9 @@ def _analyze_video_cli(
 @app.command()
 def version() -> None:
     """Show version information."""
-    from video_lens import __version__
+    from video_analyser import __version__
 
-    console.print(f"Video Lens version {__version__}")
+    console.print(f"Video Analyser version {__version__}")
 
 
 @app.command()
@@ -638,8 +638,8 @@ def rubric(
         export  - Export a rubric to JSON file
         delete  - Delete a custom rubric
     """
-    from video_lens.analysis.default_rubrics import list_default_rubrics
-    from video_lens.analysis.rubric_system import RubricRepository
+    from video_analyser.analysis.default_rubrics import list_default_rubrics
+    from video_analyser.analysis.rubric_system import RubricRepository
 
     try:
         repo = RubricRepository(rubrics_dir)
@@ -690,14 +690,14 @@ def rubric(
 
 def _rubric_list(repo: "RubricRepository") -> None:
     """List all rubrics."""
-    from video_lens.analysis.default_rubrics import (
+    from video_analyser.analysis.default_rubrics import (
         get_default_rubric,
         list_default_rubrics,
     )
 
     console.print("\n[bold]Available Default Rubrics[/bold]")
     console.print(
-        "[dim](Can be created with: video-lens rubric create --type <type>)[/dim]\n"
+        "[dim](Can be created with: video-analyser rubric create --type <type>)[/dim]\n"
     )
 
     for rubric_type in list_default_rubrics():
@@ -724,7 +724,7 @@ def _rubric_list(repo: "RubricRepository") -> None:
             console.print(f"    Created: {rubric.created_at.strftime('%Y-%m-%d')}\n")
     else:
         console.print(
-            "[dim]No custom rubrics yet. Create one with 'video-lens rubric create'[/dim]\n"
+            "[dim]No custom rubrics yet. Create one with 'video-analyser rubric create'[/dim]\n"
         )
 
 
@@ -762,7 +762,7 @@ def _rubric_show(repo: "RubricRepository", rubric_id: str) -> None:
 
 def _rubric_create(repo: "RubricRepository", rubric_type: str) -> None:
     """Create a rubric from a default template."""
-    from video_lens.analysis.default_rubrics import get_default_rubric
+    from video_analyser.analysis.default_rubrics import get_default_rubric
 
     rubric = get_default_rubric(rubric_type)
     if not rubric:
@@ -840,7 +840,7 @@ def _generate_grading_feedback(
     Raises:
         typer.Exit: If API key not found or LLM call fails
     """
-    from video_lens.utils.api_keys import get_api_key
+    from video_analyser.utils.api_keys import get_api_key
 
     # Apply defaults
     audience = audience or "student"
@@ -1049,7 +1049,7 @@ def _save_cached_result(cache_path: Path, data: dict[str, Any]) -> None:
 def _run_parallel_analysis(
     video_path: Path,
     output_dir: Path,
-    config: VideoLensConfig,
+    config: VideoAnalyserConfig,
     fast_mode: bool,
     use_cache: bool,
     logger: logging.Logger,
@@ -1060,7 +1060,7 @@ def _run_parallel_analysis(
     Returns:
         Tuple of (transcription_result, visual_analysis_result)
     """
-    cache_dir = output_dir / ".video_lens_cache"
+    cache_dir = output_dir / ".video_analyser_cache"
     cache_key = _get_cache_key(video_path)
 
     # Initialize results
@@ -1120,7 +1120,7 @@ def _run_parallel_analysis(
 
 
 def _run_transcription_only(
-    video_path: Path, config: VideoLensConfig, logger: logging.Logger
+    video_path: Path, config: VideoAnalyserConfig, logger: logging.Logger
 ) -> dict[str, Any]:
     """Run only transcription analysis."""
     # This would need to be extracted from the pipeline coordinator
@@ -1131,7 +1131,7 @@ def _run_transcription_only(
 
 
 def _run_visual_analysis_only(
-    video_path: Path, output_dir: Path, config: VideoLensConfig, logger: logging.Logger
+    video_path: Path, output_dir: Path, config: VideoAnalyserConfig, logger: logging.Logger
 ) -> dict[str, Any]:
     """Run only visual analysis."""
     # This would need to be extracted from the pipeline coordinator

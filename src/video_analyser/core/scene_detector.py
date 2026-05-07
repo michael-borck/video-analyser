@@ -13,8 +13,8 @@ from typing import Any
 import ffmpeg
 from pydantic import BaseModel
 
-from video_lens.core.video_processor import VideoInfo
-from video_lens.utils.config import get_config
+from video_analyser.core.video_processor import VideoInfo
+from video_analyser.utils.config import get_config
 
 logger = logging.getLogger(__name__)
 

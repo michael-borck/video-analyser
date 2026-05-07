@@ -8,20 +8,20 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from video_lens.analysis.ocr_detector import (
+from video_analyser.analysis.ocr_detector import (
     OCRDetector,
     OCRResult,
     TextRegion,
     create_ocr_detector,
 )
-from video_lens.core.exceptions import ErrorCode, VideoProcessingError
-from video_lens.utils.config import VideoLensConfig, VisualAnalysisConfig
+from video_analyser.core.exceptions import ErrorCode, VideoProcessingError
+from video_analyser.utils.config import VideoAnalyserConfig, VisualAnalysisConfig
 
 
 @pytest.fixture
 def mock_config():
     """Create mock configuration for testing."""
-    config = VideoLensConfig(
+    config = VideoAnalyserConfig(
         visual_analysis=VisualAnalysisConfig(
             enable_ocr=True,
             ocr_engine="tesseract",
@@ -38,7 +38,7 @@ def mock_config():
 @pytest.fixture
 def mock_config_disabled():
     """Create mock configuration with OCR disabled."""
-    config = VideoLensConfig(
+    config = VideoAnalyserConfig(
         visual_analysis=VisualAnalysisConfig(
             enable_ocr=False,
             ocr_engine="tesseract",
@@ -51,7 +51,7 @@ def mock_config_disabled():
 @pytest.fixture
 def mock_config_easyocr():
     """Create mock configuration for EasyOCR."""
-    config = VideoLensConfig(
+    config = VideoAnalyserConfig(
         visual_analysis=VisualAnalysisConfig(
             enable_ocr=True,
             ocr_engine="easyocr",
@@ -149,8 +149,8 @@ class TestOCRResult:
 class TestOCRDetector:
     """Test OCRDetector class."""
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", True)
-    @patch("video_lens.analysis.ocr_detector.pytesseract")
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", True)
+    @patch("video_analyser.analysis.ocr_detector.pytesseract")
     def test_initialization_tesseract(self, mock_pytesseract, mock_config):
         """Test OCRDetector initialization with Tesseract."""
         mock_pytesseract.get_tesseract_version.return_value = "5.0.0"
@@ -163,8 +163,8 @@ class TestOCRDetector:
         assert detector.confidence_threshold == 60.0
         mock_pytesseract.get_tesseract_version.assert_called_once()
 
-    @patch("video_lens.analysis.ocr_detector._easyocr_available", True)
-    @patch("video_lens.analysis.ocr_detector.easyocr")
+    @patch("video_analyser.analysis.ocr_detector._easyocr_available", True)
+    @patch("video_analyser.analysis.ocr_detector.easyocr")
     def test_initialization_easyocr(self, mock_easyocr, mock_config_easyocr):
         """Test OCRDetector initialization with EasyOCR."""
         mock_reader = MagicMock()
@@ -179,7 +179,7 @@ class TestOCRDetector:
 
     def test_initialization_default_config(self):
         """Test OCRDetector initialization with default config."""
-        with patch("video_lens.analysis.ocr_detector.get_config") as mock_get_config:
+        with patch("video_analyser.analysis.ocr_detector.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.visual_analysis.ocr_engine = "tesseract"
             mock_config.visual_analysis.ocr_languages = ["eng"]
@@ -188,9 +188,9 @@ class TestOCRDetector:
             mock_get_config.return_value = mock_config
 
             with (
-                patch("video_lens.analysis.ocr_detector._tesseract_available", True),
+                patch("video_analyser.analysis.ocr_detector._tesseract_available", True),
                 patch(
-                    "video_lens.analysis.ocr_detector.pytesseract"
+                    "video_analyser.analysis.ocr_detector.pytesseract"
                 ) as mock_pytesseract,
             ):
                 mock_pytesseract.get_tesseract_version.return_value = "5.0.0"
@@ -201,7 +201,7 @@ class TestOCRDetector:
                 assert detector.engine == "tesseract"
                 mock_get_config.assert_called_once()
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", False)
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", False)
     def test_initialization_missing_tesseract(self, mock_config):
         """Test OCRDetector initialization with missing Tesseract."""
         with pytest.raises(VideoProcessingError) as exc_info:
@@ -210,7 +210,7 @@ class TestOCRDetector:
         assert exc_info.value.error_code == ErrorCode.MISSING_DEPENDENCY
         assert "Tesseract OCR not available" in str(exc_info.value)
 
-    @patch("video_lens.analysis.ocr_detector._easyocr_available", False)
+    @patch("video_analyser.analysis.ocr_detector._easyocr_available", False)
     def test_initialization_missing_easyocr(self, mock_config_easyocr):
         """Test OCRDetector initialization with missing EasyOCR."""
         with pytest.raises(VideoProcessingError) as exc_info:
@@ -219,8 +219,8 @@ class TestOCRDetector:
         assert exc_info.value.error_code == ErrorCode.MISSING_DEPENDENCY
         assert "EasyOCR not available" in str(exc_info.value)
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", True)
-    @patch("video_lens.analysis.ocr_detector.pytesseract")
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", True)
+    @patch("video_analyser.analysis.ocr_detector.pytesseract")
     def test_detect_text_disabled(self, mock_pytesseract, mock_config_disabled):
         """Test text detection when OCR is disabled."""
         mock_pytesseract.get_tesseract_version.return_value = "5.0.0"
@@ -235,8 +235,8 @@ class TestOCRDetector:
     def test_detect_text_no_input(self):
         """Test text detection with no input provided."""
         with (
-            patch("video_lens.analysis.ocr_detector._tesseract_available", True),
-            patch("video_lens.analysis.ocr_detector.pytesseract") as mock_pytesseract,
+            patch("video_analyser.analysis.ocr_detector._tesseract_available", True),
+            patch("video_analyser.analysis.ocr_detector.pytesseract") as mock_pytesseract,
         ):
             mock_pytesseract.get_tesseract_version.return_value = "5.0.0"
             detector = OCRDetector()
@@ -246,8 +246,8 @@ class TestOCRDetector:
 
             assert "Must provide one of" in str(exc_info.value)
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", True)
-    @patch("video_lens.analysis.ocr_detector.pytesseract")
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", True)
+    @patch("video_analyser.analysis.ocr_detector.pytesseract")
     def test_detect_text_pil_success(self, mock_pytesseract, mock_config, sample_image):
         """Test successful text detection with PIL Image."""
         mock_pytesseract.get_tesseract_version.return_value = "5.0.0"
@@ -272,8 +272,8 @@ class TestOCRDetector:
         assert "Title Text" in result.full_text
         assert result.processing_time > 0
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", True)
-    @patch("video_lens.analysis.ocr_detector.pytesseract")
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", True)
+    @patch("video_analyser.analysis.ocr_detector.pytesseract")
     def test_detect_text_array_success(
         self, mock_pytesseract, mock_config, sample_image_array
     ):
@@ -298,8 +298,8 @@ class TestOCRDetector:
         assert len(result.text_regions) == 2
         assert "Header Content" in result.full_text
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", True)
-    @patch("video_lens.analysis.ocr_detector.pytesseract")
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", True)
+    @patch("video_analyser.analysis.ocr_detector.pytesseract")
     def test_detect_text_path_not_found(self, mock_pytesseract, mock_config):
         """Test text detection with non-existent file."""
         mock_pytesseract.get_tesseract_version.return_value = "5.0.0"
@@ -313,8 +313,8 @@ class TestOCRDetector:
         assert exc_info.value.error_code == ErrorCode.FILE_NOT_FOUND
         assert "Image file not found" in str(exc_info.value)
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", True)
-    @patch("video_lens.analysis.ocr_detector.pytesseract")
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", True)
+    @patch("video_analyser.analysis.ocr_detector.pytesseract")
     def test_detect_text_path_success(
         self, mock_pytesseract, mock_config, sample_image
     ):
@@ -349,8 +349,8 @@ class TestOCRDetector:
             if image_path.exists():
                 image_path.unlink()
 
-    @patch("video_lens.analysis.ocr_detector._easyocr_available", True)
-    @patch("video_lens.analysis.ocr_detector.easyocr")
+    @patch("video_analyser.analysis.ocr_detector._easyocr_available", True)
+    @patch("video_analyser.analysis.ocr_detector.easyocr")
     def test_detect_text_easyocr_success(
         self, mock_easyocr, mock_config_easyocr, sample_image
     ):
@@ -373,8 +373,8 @@ class TestOCRDetector:
         assert "Sample Text Another Line" in result.full_text
         assert result.engine_used == "easyocr"
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", True)
-    @patch("video_lens.analysis.ocr_detector.pytesseract")
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", True)
+    @patch("video_analyser.analysis.ocr_detector.pytesseract")
     def test_detect_text_failure(self, mock_pytesseract, mock_config, sample_image):
         """Test text detection with OCR failure."""
         mock_pytesseract.get_tesseract_version.return_value = "5.0.0"
@@ -393,8 +393,8 @@ class TestOCRDetector:
             assert exc_info.value.error_code == ErrorCode.FRAME_EXTRACTION_FAILED
             assert "OCR detection failed" in str(exc_info.value)
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", True)
-    @patch("video_lens.analysis.ocr_detector.pytesseract")
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", True)
+    @patch("video_analyser.analysis.ocr_detector.pytesseract")
     def test_filter_text_regions(self, mock_pytesseract, mock_config):
         """Test text region filtering by confidence and length."""
         mock_pytesseract.get_tesseract_version.return_value = "5.0.0"
@@ -423,8 +423,8 @@ class TestOCRDetector:
         assert filtered[0].text == "Good text"
         assert filtered[1].text == "Another good text"
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", True)
-    @patch("video_lens.analysis.ocr_detector.pytesseract")
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", True)
+    @patch("video_analyser.analysis.ocr_detector.pytesseract")
     def test_analyze_text_regions(self, mock_pytesseract, mock_config):
         """Test text region analysis for semantic information."""
         mock_pytesseract.get_tesseract_version.return_value = "5.0.0"
@@ -450,8 +450,8 @@ class TestOCRDetector:
         assert analyzed[1].is_title is False  # Normal content
         assert analyzed[2].is_slide_number is True  # Small, numbers, bottom area
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", True)
-    @patch("video_lens.analysis.ocr_detector.pytesseract")
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", True)
+    @patch("video_analyser.analysis.ocr_detector.pytesseract")
     def test_detect_text_batch_success(
         self, mock_pytesseract, mock_config, sample_image
     ):
@@ -489,8 +489,8 @@ class TestOCRDetector:
         assert "First image" in results[0].full_text
         assert "Second image" in results[1].full_text
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", True)
-    @patch("video_lens.analysis.ocr_detector.pytesseract")
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", True)
+    @patch("video_analyser.analysis.ocr_detector.pytesseract")
     def test_detect_text_batch_partial_failure(
         self, mock_pytesseract, mock_config, sample_image
     ):
@@ -534,8 +534,8 @@ class TestOCRDetector:
             assert "OCR failed" in results[1].full_text
             assert results[1].total_text_regions == 0
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", True)
-    @patch("video_lens.analysis.ocr_detector.pytesseract")
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", True)
+    @patch("video_analyser.analysis.ocr_detector.pytesseract")
     def test_get_supported_languages_tesseract(self, mock_pytesseract, mock_config):
         """Test getting supported languages for Tesseract."""
         mock_pytesseract.get_tesseract_version.return_value = "5.0.0"
@@ -548,8 +548,8 @@ class TestOCRDetector:
         assert "spa" in languages
         assert "fra" in languages
 
-    @patch("video_lens.analysis.ocr_detector._easyocr_available", True)
-    @patch("video_lens.analysis.ocr_detector.easyocr")
+    @patch("video_analyser.analysis.ocr_detector._easyocr_available", True)
+    @patch("video_analyser.analysis.ocr_detector.easyocr")
     def test_get_supported_languages_easyocr(self, mock_easyocr, mock_config_easyocr):
         """Test getting supported languages for EasyOCR."""
         mock_reader = MagicMock()
@@ -562,8 +562,8 @@ class TestOCRDetector:
         assert "es" in languages
         assert "fr" in languages
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", True)
-    @patch("video_lens.analysis.ocr_detector.pytesseract")
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", True)
+    @patch("video_analyser.analysis.ocr_detector.pytesseract")
     def test_preprocess_image(self, mock_pytesseract, mock_config, sample_image):
         """Test image preprocessing for OCR."""
         mock_pytesseract.get_tesseract_version.return_value = "5.0.0"
@@ -576,8 +576,8 @@ class TestOCRDetector:
         # Processed image should be grayscale (mode 'L')
         assert processed.mode == "L"
 
-    @patch("video_lens.analysis.ocr_detector._easyocr_available", True)
-    @patch("video_lens.analysis.ocr_detector.easyocr")
+    @patch("video_analyser.analysis.ocr_detector._easyocr_available", True)
+    @patch("video_analyser.analysis.ocr_detector.easyocr")
     def test_cleanup_easyocr(self, mock_easyocr, mock_config_easyocr):
         """Test OCR detector cleanup with EasyOCR."""
         mock_reader = MagicMock()
@@ -594,7 +594,7 @@ class TestOCRDetectorFactory:
 
     def test_create_ocr_detector_no_config(self):
         """Test creating OCRDetector without config."""
-        with patch("video_lens.analysis.ocr_detector.get_config") as mock_get_config:
+        with patch("video_analyser.analysis.ocr_detector.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.visual_analysis.ocr_engine = "tesseract"
             mock_config.visual_analysis.ocr_languages = ["eng"]
@@ -603,9 +603,9 @@ class TestOCRDetectorFactory:
             mock_get_config.return_value = mock_config
 
             with (
-                patch("video_lens.analysis.ocr_detector._tesseract_available", True),
+                patch("video_analyser.analysis.ocr_detector._tesseract_available", True),
                 patch(
-                    "video_lens.analysis.ocr_detector.pytesseract"
+                    "video_analyser.analysis.ocr_detector.pytesseract"
                 ) as mock_pytesseract,
             ):
                 mock_pytesseract.get_tesseract_version.return_value = "5.0.0"
@@ -615,8 +615,8 @@ class TestOCRDetectorFactory:
                 assert isinstance(detector, OCRDetector)
                 assert detector.config == mock_config
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", True)
-    @patch("video_lens.analysis.ocr_detector.pytesseract")
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", True)
+    @patch("video_analyser.analysis.ocr_detector.pytesseract")
     def test_create_ocr_detector_with_config(self, mock_pytesseract, mock_config):
         """Test creating OCRDetector with config."""
         mock_pytesseract.get_tesseract_version.return_value = "5.0.0"
@@ -629,8 +629,8 @@ class TestOCRDetectorFactory:
 class TestOCRDetectorIntegration:
     """Integration tests for OCR detection workflow."""
 
-    @patch("video_lens.analysis.ocr_detector._tesseract_available", True)
-    @patch("video_lens.analysis.ocr_detector.pytesseract")
+    @patch("video_analyser.analysis.ocr_detector._tesseract_available", True)
+    @patch("video_analyser.analysis.ocr_detector.pytesseract")
     def test_full_ocr_workflow(self, mock_pytesseract, mock_config, sample_image):
         """Test complete OCR detection workflow."""
         mock_pytesseract.get_tesseract_version.return_value = "5.0.0"

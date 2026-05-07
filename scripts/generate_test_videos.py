@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate test video fixtures for DeepBrief development and testing."""
+"""Generate test video fixtures for Video Analyser development and testing."""
 
 import subprocess
 import sys
@@ -359,7 +359,7 @@ def create_realistic_samples(output_path: Path) -> bool:
 
 def main() -> int:
     """Main function to generate all test videos."""
-    console.print("[bold blue]DeepBrief Test Video Generator[/bold blue]\n")
+    console.print("[bold blue]Video Analyser Test Video Generator[/bold blue]\n")
 
     # Check prerequisites
     if not check_ffmpeg():

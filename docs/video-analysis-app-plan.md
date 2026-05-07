@@ -9,7 +9,7 @@ A video analysis application that helps students, educators, and professionals a
 ### Top Candidates
 1. **FrameFocus** ⭐
    - *"Focus on what matters, frame by frame."*
-2. **DeepBrief** ⭐
+2. **Video Analyser** ⭐
    - *"Summarize visuals, voices, and everything in between."*
 3. **VidInsight**
    - *"Transform videos into actionable insights."*
@@ -813,7 +813,7 @@ output:
 ## 📞 Contact & Contribution
 
 - **Project Lead**: Michael Borck
-- **Repository**: https://github.com/michael-borck/deep-brief
+- **Repository**: https://github.com/michael-borck/video-analyser
 - **Documentation**: [Docs Link]
 - **Support**: support@frameocus.app
 

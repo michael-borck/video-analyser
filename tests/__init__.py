@@ -1,1 +1,1 @@
-"""Test package for DeepBrief."""
+"""Test package for Video Analyser."""

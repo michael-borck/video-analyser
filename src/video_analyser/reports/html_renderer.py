@@ -1,4 +1,4 @@
-"""HTML report renderer for DeepBrief analysis results."""
+"""HTML report renderer for Video Analyser analysis results."""
 
 import logging
 from pathlib import Path

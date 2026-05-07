@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from video_lens.core.scene_detector import Scene, SceneDetector
-from video_lens.core.video_processor import VideoInfo, VideoProcessor
+from video_analyser.core.scene_detector import Scene, SceneDetector
+from video_analyser.core.video_processor import VideoInfo, VideoProcessor
 
 
 @pytest.fixture

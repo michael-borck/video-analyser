@@ -21,8 +21,8 @@ import numpy as np
 from PIL import Image
 from pydantic import BaseModel
 
-from video_lens.utils.api_keys import APIProvider, get_api_key_with_validation
-from video_lens.utils.config import get_config
+from video_analyser.utils.api_keys import APIProvider, get_api_key_with_validation
+from video_analyser.utils.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -323,8 +323,8 @@ Provide a single paragraph caption (2-4 sentences) that would help someone under
         # but requires a different base URL and headers
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "HTTP-Referer": "https://github.com/anthropics/video-lens",
-            "X-Title": "Video Lens",
+            "HTTP-Referer": "https://github.com/anthropics/video-analyser",
+            "X-Title": "Video Analyser",
         }
 
         try:

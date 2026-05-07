@@ -22,13 +22,13 @@ from transformers import (
     BlipProcessor,  # type: ignore
 )
 
-from video_lens.analysis.error_handling import (
+from video_analyser.analysis.error_handling import (
     ModelInitializationError,
     validate_image,
     with_retry,
 )
-from video_lens.core.exceptions import ErrorCode, VideoProcessingError
-from video_lens.utils.config import get_config
+from video_analyser.core.exceptions import ErrorCode, VideoProcessingError
+from video_analyser.utils.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -502,7 +502,7 @@ class ImageCaptioner:
         # Lazy initialization of API captioner
         if self.api_captioner is None:
             try:
-                from video_lens.analysis.api_image_captioner import APIImageCaptioner
+                from video_analyser.analysis.api_image_captioner import APIImageCaptioner
 
                 self.api_captioner = APIImageCaptioner(config=self.config)
                 logger.info(

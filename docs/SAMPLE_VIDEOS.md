@@ -1,4 +1,4 @@
-# Sample Videos for DeepBrief
+# Sample Videos for Video Analyser
 
 This document explains the sample videos generated for testing and development.
 

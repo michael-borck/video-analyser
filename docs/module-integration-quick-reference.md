@@ -22,7 +22,7 @@
 
 ```python
 from pathlib import Path
-from deep_brief.analysis.speaker_diarization import SpeakerDiarizer
+from video_analyser.analysis.speaker_diarization import SpeakerDiarizer
 import asyncio
 
 # Initialize (requires pyannote.audio installed)
@@ -57,7 +57,7 @@ print(f"Processing time: {result.processing_time}s")
 
 ```python
 from pathlib import Path
-from deep_brief.analysis.rubric_system import (
+from video_analyser.analysis.rubric_system import (
     RubricBuilder, RubricRepository, RubricScorer
 )
 
@@ -119,7 +119,7 @@ huggingface-cli login  # Obtain token first from huggingface.co
 ### For Rubric System
 ```bash
 # Already included in base dependencies
-# Just ensure you have deep-brief installed
+# Just ensure you have video-analyser installed
 pip install -e .
 ```
 
@@ -128,7 +128,7 @@ pip install -e .
 ## Integration Roadmap
 
 ### Phase 1: Configuration (Required)
-Add to `src/deep_brief/utils/config.py`:
+Add to `src/video_analyser/utils/config.py`:
 ```python
 class DiarizationConfig(BaseModel):
     enabled: bool = Field(default=False)
@@ -143,11 +143,11 @@ class RubricConfig(BaseModel):
 ```
 
 ### Phase 2: Pipeline Integration
-Modify `src/deep_brief/core/pipeline_coordinator.py`:
+Modify `src/video_analyser/core/pipeline_coordinator.py`:
 ```python
 async def analyze_speech(self, audio_path, ...):
     # Add diarization step
-    from deep_brief.analysis.speaker_diarization import SpeakerDiarizer
+    from video_analyser.analysis.speaker_diarization import SpeakerDiarizer
     diarizer = SpeakerDiarizer(config=self.config)
     diar_result = await diarizer.diarize(audio_path)
     
@@ -158,11 +158,11 @@ async def analyze_speech(self, audio_path, ...):
 ```
 
 ### Phase 3: CLI Integration
-Modify `src/deep_brief/cli.py`:
+Modify `src/video_analyser/cli.py`:
 Add diarization to operations list (line 178-186)
 
 ### Phase 4: Report Integration
-Modify `src/deep_brief/reports/report_generator.py`:
+Modify `src/video_analyser/reports/report_generator.py`:
 - Add speaker diarization results to JSON output
 - Add speaker labels to HTML output
 - Add rubric assessment to report (if provided)

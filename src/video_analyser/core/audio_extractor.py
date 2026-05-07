@@ -1,4 +1,4 @@
-"""Audio extraction and preprocessing utilities for DeepBrief."""
+"""Audio extraction and preprocessing utilities for Video Analyser."""
 
 # NOTE: ffmpeg-python library lacks comprehensive type annotations
 # See: https://github.com/kkroening/ffmpeg-python/issues/247
@@ -13,13 +13,13 @@ from typing import Any
 import ffmpeg
 from pydantic import BaseModel
 
-from video_lens.core.exceptions import (
+from video_analyser.core.exceptions import (
     AudioProcessingError,
     ErrorCode,
     handle_ffmpeg_error,
 )
-from video_lens.core.video_processor import VideoInfo
-from video_lens.utils.config import get_config
+from video_analyser.core.video_processor import VideoInfo
+from video_analyser.utils.config import get_config
 
 logger = logging.getLogger(__name__)
 

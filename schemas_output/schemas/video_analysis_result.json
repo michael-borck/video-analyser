@@ -2010,7 +2010,7 @@
       "type": "object"
     }
   },
-  "description": "JSON Schema for video_analysis_result in Deep Brief video analysis",
+  "description": "JSON Schema for video_analysis_result in Video Analyser video analysis",
   "properties": {
     "analysis_id": {
       "description": "Unique identifier for this analysis",
@@ -2116,5 +2116,5 @@
   "title": "Video Analysis Result",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://deep-brief.ai/schemas/video_analysis_result.json"
+  "$id": "https://video-analyser.ai/schemas/video_analysis_result.json"
 }
