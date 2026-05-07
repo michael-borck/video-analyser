@@ -223,9 +223,10 @@ class GradioInterface:
             )
 
             # Footer
-            gr.HTML("""
+            from .. import __version__ as _v
+            gr.HTML(f"""
             <div style="text-align: center; margin-top: 2rem; color: #666;">
-                <p>Video Analyser v0.6.0 - Video Analysis Tool for the Analyser Family</p>
+                <p>Video Analyser v{_v} - Video Analysis Tool for the Analyser Family</p>
                 <p><a href="https://github.com/michaelborck-education/video-analyser" target="_blank">GitHub</a></p>
             </div>
             """)

@@ -332,7 +332,7 @@ class VideoAnalyserConfig(BaseSettings):
 
     # Application settings
     app_name: str = Field(default="Video Analyser")
-    version: str = Field(default="0.6.0")
+    version: str = Field(default_factory=lambda: __import__("importlib.metadata", fromlist=["version"]).version("video-analyser"))
     debug: bool = Field(default=False)
 
     # Component configurations
