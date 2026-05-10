@@ -984,7 +984,9 @@ class TestFrameExtractionIntegration:
 
             # Mock the captioner
             with patch.object(frame_extractor, "_caption_frame") as mock_caption_frame:
-                from video_analyser.analysis.image_captioner import CaptionResult
+                # CaptionResult is now an adapter class living in
+                # visual_analyzer.py — image-analyser owns the underlying model.
+                from video_analyser.analysis.visual_analyzer import CaptionResult
 
                 mock_caption_frame.return_value = CaptionResult(
                     caption="A test frame with geometric shapes",
@@ -1039,7 +1041,12 @@ class TestFrameExtractionIntegration:
             with patch.object(
                 frame_extractor, "_extract_text_from_frame"
             ) as mock_ocr_frame:
-                from video_analyser.analysis.ocr_detector import OCRResult, TextRegion
+                # OCRResult / TextRegion are now adapter classes in
+                # visual_analyzer.py — image-analyser owns the underlying engine.
+                from video_analyser.analysis.visual_analyzer import (
+                    OCRResult,
+                    TextRegion,
+                )
 
                 mock_ocr_frame.return_value = OCRResult(
                     text_regions=[

@@ -2,15 +2,27 @@
 
 This module provides frame extraction capabilities with quality assessment
 including blur detection, contrast analysis, and lighting evaluation.
+
+Per-frame image analysis (captioning, OCR, object detection) is delegated to
+the ``image-analyser`` package. The CaptionResult / OCRResult /
+ObjectDetectionResult classes defined here are thin Pydantic adapters that
+preserve the historical field surface consumed by ``report_generator.py`` and
+existing test fixtures, while their data is produced by a single
+``ImageAnalyser.analyse()`` call per frame.
 """
 
+import contextlib
 import logging
+from enum import Enum
 from pathlib import Path
 from typing import Any, cast
 
 import cv2
 import numpy as np
+from image_analyser import ImageAnalyser
+from image_analyser.schemas import AnalysisResult as ImageAnalysisResult
 from numpy.typing import NDArray
+from PIL import Image as PILImage
 from pydantic import BaseModel
 
 from video_analyser.analysis.error_handling import (
@@ -18,14 +30,201 @@ from video_analyser.analysis.error_handling import (
     handle_corrupt_frame,
     validate_image,
 )
-from video_analyser.analysis.image_captioner import CaptionResult, ImageCaptioner
-from video_analyser.analysis.object_detector import ObjectDetectionResult, ObjectDetector
-from video_analyser.analysis.ocr_detector import OCRDetector, OCRResult
 from video_analyser.core.exceptions import ErrorCode, VideoProcessingError
 from video_analyser.core.scene_detector import SceneDetectionResult
 from video_analyser.utils.config import get_config
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Backward-compatible adapter types
+#
+# image-analyser's native schemas (Caption / Ocr / Object) carry a different
+# shape than the legacy CaptionResult / OCRResult / ObjectDetectionResult
+# classes that report_generator.py and existing tests consume. To keep the
+# public surface of this module stable we redefine the legacy classes here as
+# thin Pydantic adapters and provide ``from_image_analyser`` constructors that
+# translate from image-analyser's native types. Fields with no equivalent in
+# image-analyser (e.g. caption confidence, token counts, cost estimates) are
+# preserved as None / 0.0 defaults.
+# ---------------------------------------------------------------------------
+
+
+class CaptionResult(BaseModel):
+    """Adapter for image-analyser's Caption."""
+
+    caption: str
+    confidence: float = 0.0  # image-analyser's Caption has no confidence; default 0.0
+    processing_time: float = 0.0  # tracked at AnalysisResult level, not per-step
+    model_used: str = ""
+    tokens_generated: int = 0  # image-analyser does not surface token counts
+    cost_estimate: float | None = None  # image-analyser does not surface cost
+    alternative_captions: list[str] = []
+
+    @classmethod
+    def from_image_analyser(
+        cls, c: Any, processing_time: float = 0.0
+    ) -> "CaptionResult":
+        """Build a CaptionResult from an image_analyser.schemas.Caption."""
+        return cls(
+            caption=getattr(c, "text", ""),
+            confidence=0.0,
+            processing_time=processing_time,
+            model_used=f"{getattr(c, 'backend', '')}:{getattr(c, 'model', '')}".strip(":"),
+            tokens_generated=0,
+            cost_estimate=None,
+            alternative_captions=[],
+        )
+
+
+class TextRegion(BaseModel):
+    """Adapter for image-analyser's OcrBlock."""
+
+    text: str
+    confidence: float
+    bbox: tuple[int, int, int, int]  # (x, y, width, height)
+    language: str | None = None
+    font_size_estimate: float | None = None
+    is_title: bool = False
+    is_slide_number: bool = False
+
+    @classmethod
+    def from_image_analyser(cls, block: Any) -> "TextRegion":
+        bbox = block.bbox
+        return cls(
+            text=block.text,
+            confidence=block.confidence,
+            bbox=(bbox.x, bbox.y, bbox.w, bbox.h),
+        )
+
+
+class OCRResult(BaseModel):
+    """Adapter for image-analyser's Ocr."""
+
+    text_regions: list[TextRegion]
+    full_text: str
+    processing_time: float = 0.0
+    engine_used: str = ""
+    languages_detected: list[str] = []
+    total_text_regions: int = 0
+    high_confidence_regions: int = 0
+    average_confidence: float = 0.0
+
+    @classmethod
+    def from_image_analyser(
+        cls, oc: Any, processing_time: float = 0.0
+    ) -> "OCRResult":
+        regions = [TextRegion.from_image_analyser(b) for b in getattr(oc, "blocks", [])]
+        confidences = [r.confidence for r in regions]
+        avg_conf = sum(confidences) / len(confidences) if confidences else 0.0
+        # image-analyser OCR confidence is 0..1; the legacy threshold lived on a
+        # 0..100 scale. Normalise high-confidence count using a 0..1 cut-off of
+        # 0.6 so callers comparing against `len(text_regions)` still get a
+        # meaningful number.
+        high_conf = sum(1 for c in confidences if c >= 0.6)
+        return cls(
+            text_regions=regions,
+            full_text=getattr(oc, "text", ""),
+            processing_time=processing_time,
+            engine_used=getattr(oc, "engine", ""),
+            languages_detected=[],
+            total_text_regions=len(regions),
+            high_confidence_regions=high_conf,
+            average_confidence=avg_conf,
+        )
+
+
+class PresentationElement(str, Enum):
+    """Generic element-type label produced by image-analyser's object detector.
+
+    The image-analyser DETR backend returns free-form COCO-style labels (e.g.
+    ``"person"``, ``"laptop"``); this enum is preserved for legacy callers but
+    is no longer the source of truth — see ``DetectedObject.element_type``,
+    which is now a plain string.
+    """
+
+    UNKNOWN = "unknown"
+
+
+class DetectedObject(BaseModel):
+    """Adapter for image-analyser's Object."""
+
+    element_type: str  # was PresentationElement; image-analyser returns free-form labels
+    confidence: float
+    bbox: tuple[int, int, int, int]  # x, y, width, height
+    center: tuple[float, float] = (0.5, 0.5)
+    area_ratio: float = 0.0
+    attributes: dict[str, Any] = {}
+
+    @classmethod
+    def from_image_analyser(
+        cls, obj: Any, frame_width: int, frame_height: int
+    ) -> "DetectedObject":
+        bbox = obj.bbox
+        cx = (bbox.x + bbox.w / 2.0) / frame_width if frame_width > 0 else 0.5
+        cy = (bbox.y + bbox.h / 2.0) / frame_height if frame_height > 0 else 0.5
+        area = (bbox.w * bbox.h) / (frame_width * frame_height) if frame_width and frame_height else 0.0
+        return cls(
+            element_type=obj.label,
+            confidence=obj.score,
+            bbox=(bbox.x, bbox.y, bbox.w, bbox.h),
+            center=(cx, cy),
+            area_ratio=area,
+        )
+
+    def get_description(self) -> str:
+        return f"{self.element_type} (confidence: {self.confidence:.1%})"
+
+
+class ObjectDetectionResult(BaseModel):
+    """Adapter for the list[Object] returned by image-analyser."""
+
+    detected_objects: list[DetectedObject]
+    total_objects: int
+    processing_time: float = 0.0
+    frame_width: int
+    frame_height: int
+    element_counts: dict[str, int] = {}
+    high_confidence_objects: int = 0
+    average_confidence: float = 0.0
+    layout_type: str = "unknown"
+    has_presenter: bool = False
+    dominant_element: str | None = None
+
+    @classmethod
+    def from_image_analyser(
+        cls,
+        objs: list[Any],
+        frame_width: int,
+        frame_height: int,
+        processing_time: float = 0.0,
+    ) -> "ObjectDetectionResult":
+        detected = [
+            DetectedObject.from_image_analyser(o, frame_width, frame_height)
+            for o in (objs or [])
+        ]
+        counts: dict[str, int] = {}
+        for d in detected:
+            counts[d.element_type] = counts.get(d.element_type, 0) + 1
+        confidences = [d.confidence for d in detected]
+        avg_conf = sum(confidences) / len(confidences) if confidences else 0.0
+        high_conf = sum(1 for c in confidences if c > 0.8)
+        has_presenter = any(d.element_type == "person" for d in detected)
+        dominant = max(counts.items(), key=lambda kv: kv[1])[0] if counts else None
+        return cls(
+            detected_objects=detected,
+            total_objects=len(detected),
+            processing_time=processing_time,
+            frame_width=frame_width,
+            frame_height=frame_height,
+            element_counts=counts,
+            high_confidence_objects=high_conf,
+            average_confidence=avg_conf,
+            layout_type="unknown",
+            has_presenter=has_presenter,
+            dominant_element=dominant,
+        )
 
 
 class FrameQualityMetrics(BaseModel):
@@ -389,10 +588,53 @@ class FrameExtractor:
     def __init__(self, config: Any = None):
         """Initialize frame extractor with configuration."""
         self.config = config or get_config()
-        self.captioner = None  # Lazy-loaded image captioner
-        self.ocr_detector = None  # Lazy-loaded OCR detector
-        self.object_detector = None  # Lazy-loaded object detector
+        # Single delegated image analyser; lazily constructed so callers that
+        # never enable any image analysis pay no startup cost.
+        self.image_analyser: ImageAnalyser | None = None
+        # Legacy attributes preserved for tests that still patch them; they no
+        # longer hold per-engine state but allow `cleanup()` and assertions to
+        # behave the same way they did before the image-analyser delegation.
+        self.captioner: Any = None
+        self.ocr_detector: Any = None
+        self.object_detector: Any = None
         logger.info("FrameExtractor initialized")
+
+    # ------------------------------------------------------------------
+    # image-analyser delegation
+    # ------------------------------------------------------------------
+
+    def _get_image_analyser(self) -> ImageAnalyser:
+        """Return the lazily-constructed shared ImageAnalyser instance."""
+        if self.image_analyser is None:
+            visual = self.config.visual_analysis
+            # Build the `only` list dynamically so we never run analyses the
+            # user has disabled; the always-on identity / quality / colour /
+            # hashing / metadata / barcode tiers are skipped to keep per-frame
+            # cost low (those are useful for static images, less so for
+            # already-quality-assessed video frames).
+            only: list[str] = []
+            if visual.enable_captioning:
+                only.append("caption")
+            if visual.enable_ocr:
+                only.append("ocr")
+            if visual.enable_object_detection:
+                only.append("objects")
+            if not only:
+                # ImageAnalyser requires at least one tier; pass a harmless
+                # selection so construction doesn't fail. Callers will simply
+                # never invoke `.analyse()` in this case.
+                only = ["objects"]
+            # Map the configured caption backend to image-analyser's env-driven
+            # selector ("local" or "api").
+            backend = "api" if visual.captioning_backend == "api" else "local"
+            self.image_analyser = ImageAnalyser(only=only, caption_backend=backend)
+        return self.image_analyser
+
+    def _analyse_frame(self, frame: NDArray[np.uint8]) -> ImageAnalysisResult:
+        """Run image-analyser on a BGR OpenCV frame and return its AnalysisResult."""
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        pil = PILImage.fromarray(rgb_frame)
+        return self._get_image_analyser().analyse(pil)
 
     def extract_frames_from_scenes(
         self,
@@ -1321,26 +1563,21 @@ class FrameExtractor:
         }
 
     def _caption_frame(self, frame: NDArray[np.uint8]) -> CaptionResult | None:
-        """Generate caption for a frame using image captioning model."""
+        """Generate caption for a frame via the delegated image-analyser."""
         if not self.config.visual_analysis.enable_captioning:
             return None
 
         try:
-            # Lazy-load captioner
-            if self.captioner is None:
-                self.captioner = ImageCaptioner(config=self.config)
-
-            # Convert BGR frame to RGB PIL Image for captioning
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            # Generate caption
-            caption_result = self.captioner.caption_image(image_array=rgb_frame)
-
-            return caption_result
+            result = self._analyse_frame(frame)
+            if result.caption is None:
+                return None
+            return CaptionResult.from_image_analyser(
+                result.caption, processing_time=result.duration_ms / 1000.0
+            )
 
         except Exception as e:
             logger.warning(f"Failed to generate caption for frame: {e}")
-            # Return a failed caption result instead of None to maintain consistency
+            # Preserve the historical "return a placeholder, not None" contract
             return CaptionResult(
                 caption="Caption generation failed",
                 confidence=0.0,
@@ -1351,26 +1588,20 @@ class FrameExtractor:
             )
 
     def _extract_text_from_frame(self, frame: NDArray[np.uint8]) -> OCRResult | None:
-        """Extract text from a frame using OCR."""
+        """Extract text from a frame via the delegated image-analyser."""
         if not self.config.visual_analysis.enable_ocr:
             return None
 
         try:
-            # Lazy-load OCR detector
-            if self.ocr_detector is None:
-                self.ocr_detector = OCRDetector(config=self.config)
-
-            # Convert BGR frame to RGB for OCR
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            # Perform OCR
-            ocr_result = self.ocr_detector.detect_text(image_array=rgb_frame)
-
-            return ocr_result
+            result = self._analyse_frame(frame)
+            if result.ocr is None:
+                return None
+            return OCRResult.from_image_analyser(
+                result.ocr, processing_time=result.duration_ms / 1000.0
+            )
 
         except Exception as e:
             logger.warning(f"Failed to extract text from frame: {e}")
-            # Return a failed OCR result instead of None to maintain consistency
             return OCRResult(
                 text_regions=[],
                 full_text="OCR extraction failed",
@@ -1385,32 +1616,28 @@ class FrameExtractor:
     def _detect_objects_in_frame(
         self, frame: NDArray[np.uint8]
     ) -> ObjectDetectionResult | None:
-        """Detect presentation elements in a frame using object detection."""
+        """Detect objects in a frame via the delegated image-analyser."""
         if not self.config.visual_analysis.enable_object_detection:
             return None
 
+        height, width = frame.shape[:2]
         try:
-            # Lazy-load object detector
-            if self.object_detector is None:
-                self.object_detector = ObjectDetector(config=self.config)
-
-            # Convert BGR frame to RGB for object detection
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            # Perform object detection
-            detection_result = self.object_detector.detect_objects(image=rgb_frame)
-
-            return detection_result
+            result = self._analyse_frame(frame)
+            return ObjectDetectionResult.from_image_analyser(
+                result.objects or [],
+                frame_width=width,
+                frame_height=height,
+                processing_time=result.duration_ms / 1000.0,
+            )
 
         except Exception as e:
             logger.warning(f"Failed to detect objects in frame: {e}")
-            # Return a failed detection result instead of None to maintain consistency
             return ObjectDetectionResult(
                 detected_objects=[],
                 total_objects=0,
                 processing_time=0.0,
-                frame_width=frame.shape[1],
-                frame_height=frame.shape[0],
+                frame_width=width,
+                frame_height=height,
                 element_counts={},
                 high_confidence_objects=0,
                 average_confidence=0.0,
@@ -1439,18 +1666,23 @@ class FrameExtractor:
         )
 
     def cleanup(self):
-        """Clean up model resources."""
-        if self.captioner is not None:
-            self.captioner.cleanup()
-            self.captioner = None
+        """Clean up model resources.
 
-        if self.ocr_detector is not None:
-            self.ocr_detector.cleanup()
-            self.ocr_detector = None
+        ImageAnalyser does not expose a cleanup API; we simply drop the
+        reference and let GC reclaim any cached models. Legacy attributes
+        (``captioner``, ``ocr_detector``, ``object_detector``) are also reset
+        so tests that injected mocks see them cleared.
+        """
+        if self.image_analyser is not None:
+            self.image_analyser = None
 
-        if self.object_detector is not None:
-            self.object_detector.cleanup()
-            self.object_detector = None
+        for attr in ("captioner", "ocr_detector", "object_detector"):
+            obj = getattr(self, attr, None)
+            if obj is not None and hasattr(obj, "cleanup"):
+                # Best-effort during teardown — cleanup failures shouldn't propagate.
+                with contextlib.suppress(Exception):
+                    obj.cleanup()
+            setattr(self, attr, None)
 
         logger.info("FrameExtractor model resources cleaned up")
 

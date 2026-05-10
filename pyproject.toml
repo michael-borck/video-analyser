@@ -32,15 +32,20 @@ dependencies = [
     "faster-whisper>=0.10.0",
     "torch>=2.2.0",
     "torchvision>=0.17.0",
-    "transformers>=4.36.0",
     "Pillow>=10.1.0",
 
-    # API clients for image captioning
+    # Per-frame image analysis (captioning, OCR, object detection) is delegated
+    # to image-analyser. The [ml,ocr,api] extras pull in transformers, pytesseract,
+    # easyocr, and the Anthropic/OpenAI/Google API clients used by image-analyser
+    # internally — so they do not need to be declared here directly.
+    "image-analyser[ml,ocr,api]>=0.1.2",
+
+    # API client for AI-generated text feedback (cli.py uses this directly,
+    # independent of image captioning).
     "anthropic>=0.7.0",
 
     # NLP
     "spacy>=3.7.0",
-    "pytesseract>=0.3.10",
 
     # Web interface
     "gradio>=4.8.0",

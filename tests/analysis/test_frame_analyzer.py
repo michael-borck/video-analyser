@@ -572,8 +572,10 @@ class TestFrameAnalysisPipeline:
 
     def test_determine_content_type(self, pipeline):
         """Test content type determination."""
-        # Create mock visual result with slide layout
-        from video_analyser.analysis.object_detector import ObjectDetectionResult
+        # Create mock visual result with slide layout. ObjectDetectionResult is
+        # now an adapter class in visual_analyzer.py — image-analyser owns the
+        # underlying detector.
+        from video_analyser.analysis.visual_analyzer import ObjectDetectionResult
 
         mock_obj_result = ObjectDetectionResult(
             detected_objects=[],
