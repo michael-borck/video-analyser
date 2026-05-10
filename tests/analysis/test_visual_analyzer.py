@@ -568,7 +568,9 @@ class TestFrameExtractor:
 
     def test_initialization_default_config(self):
         """Test FrameExtractor initialization with default config."""
-        with patch("video_analyser.analysis.visual_analyzer.get_config") as mock_get_config:
+        with patch(
+            "video_analyser.analysis.visual_analyzer.get_config"
+        ) as mock_get_config:
             mock_config = MagicMock()
             mock_get_config.return_value = mock_config
 
@@ -783,7 +785,9 @@ class TestFrameExtractorFactory:
 
     def test_create_frame_extractor_no_config(self):
         """Test creating FrameExtractor without config."""
-        with patch("video_analyser.analysis.visual_analyzer.get_config") as mock_get_config:
+        with patch(
+            "video_analyser.analysis.visual_analyzer.get_config"
+        ) as mock_get_config:
             mock_config = MagicMock()
             mock_get_config.return_value = mock_config
 
@@ -984,17 +988,15 @@ class TestFrameExtractionIntegration:
 
             # Mock the captioner
             with patch.object(frame_extractor, "_caption_frame") as mock_caption_frame:
-                # CaptionResult is now an adapter class living in
-                # visual_analyzer.py — image-analyser owns the underlying model.
-                from video_analyser.analysis.visual_analyzer import CaptionResult
+                # image-analyser owns the Caption schema directly.
+                from image_analyser.schemas import Caption
 
-                mock_caption_frame.return_value = CaptionResult(
-                    caption="A test frame with geometric shapes",
-                    confidence=0.85,
-                    processing_time=1.2,
-                    model_used="Salesforce/blip2-opt-2.7b",
+                mock_caption_frame.return_value = Caption(
+                    text="A test frame with geometric shapes",
+                    backend="local",
+                    model="Salesforce/blip2-opt-2.7b",
                     tokens_generated=8,
-                    alternative_captions=[],
+                    cost_estimate_usd=None,
                 )
 
                 result = frame_extractor.extract_frames_from_scenes(
@@ -1007,10 +1009,11 @@ class TestFrameExtractionIntegration:
                 for frame in scene_analysis.frames:
                     assert frame.caption_result is not None
                     assert (
-                        frame.caption_result.caption
+                        frame.caption_result.text
                         == "A test frame with geometric shapes"
                     )
-                    assert frame.caption_result.confidence == 0.85
+                    assert frame.caption_result.tokens_generated == 8
+                    assert frame.caption_result.backend == "local"
 
         finally:
             # Clean up
@@ -1041,29 +1044,20 @@ class TestFrameExtractionIntegration:
             with patch.object(
                 frame_extractor, "_extract_text_from_frame"
             ) as mock_ocr_frame:
-                # OCRResult / TextRegion are now adapter classes in
-                # visual_analyzer.py — image-analyser owns the underlying engine.
-                from video_analyser.analysis.visual_analyzer import (
-                    OCRResult,
-                    TextRegion,
-                )
+                # image-analyser owns the Ocr / OcrBlock / BBox schemas directly.
+                from image_analyser.schemas import BBox, Ocr, OcrBlock
 
-                mock_ocr_frame.return_value = OCRResult(
-                    text_regions=[
-                        TextRegion(
+                mock_ocr_frame.return_value = Ocr(
+                    text="Sample presentation title",
+                    blocks=[
+                        OcrBlock(
                             text="Sample presentation title",
-                            confidence=85.0,
-                            bbox=(50, 20, 200, 30),
-                            is_title=True,
+                            bbox=BBox(x=50, y=20, w=200, h=30),
+                            confidence=0.85,
                         )
                     ],
-                    full_text="Sample presentation title",
-                    processing_time=0.8,
-                    engine_used="tesseract",
-                    languages_detected=["eng"],
-                    total_text_regions=1,
-                    high_confidence_regions=1,
-                    average_confidence=85.0,
+                    engine="tesseract",
+                    average_confidence=0.85,
                 )
 
                 result = frame_extractor.extract_frames_from_scenes(
@@ -1075,9 +1069,11 @@ class TestFrameExtractionIntegration:
             for scene_analysis in result.scene_analyses:
                 for frame in scene_analysis.frames:
                     assert frame.ocr_result is not None
-                    assert frame.ocr_result.full_text == "Sample presentation title"
-                    assert len(frame.ocr_result.text_regions) == 1
-                    assert frame.ocr_result.text_regions[0].is_title is True
+                    assert frame.ocr_result.text == "Sample presentation title"
+                    assert len(frame.ocr_result.blocks) == 1
+                    assert (
+                        frame.ocr_result.blocks[0].text == "Sample presentation title"
+                    )
 
         finally:
             # Clean up

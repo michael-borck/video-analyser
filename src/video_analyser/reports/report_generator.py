@@ -82,12 +82,16 @@ class FrameReport(BaseModel):
     width: int
     height: int
 
-    # Caption
+    # Caption.
+    # NOTE: image-analyser's Caption has no confidence field — the legacy
+    # ``caption_confidence`` was a pseudo-heuristic and has been removed.
+    # ``caption_cost`` is now ``caption_cost_usd`` (real, from image-analyser
+    # 0.1.3's Caption.cost_estimate_usd).
     caption: str | None = None
-    caption_confidence: float | None = None
     caption_model: str | None = None
-    caption_tokens: int | None = None  # Total tokens used for caption
-    caption_cost: float | None = None  # Cost in USD for caption
+    caption_backend: str | None = None  # "local" | "api"
+    caption_tokens: int | None = None  # Real token count from image-analyser
+    caption_cost_usd: float | None = None  # Real USD cost from image-analyser
 
     # OCR
     ocr_text: str | None = None
@@ -241,19 +245,18 @@ class ReportGenerator:
 
             # Add caption if available
             if frame.caption_result:
-                frame_report.caption = frame.caption_result.caption
-                frame_report.caption_confidence = frame.caption_result.confidence
-                frame_report.caption_model = frame.caption_result.model_used
+                frame_report.caption = frame.caption_result.text
+                frame_report.caption_model = frame.caption_result.model
+                frame_report.caption_backend = frame.caption_result.backend
                 frame_report.caption_tokens = frame.caption_result.tokens_generated
-                frame_report.caption_cost = frame.caption_result.cost_estimate
+                frame_report.caption_cost_usd = frame.caption_result.cost_estimate_usd
                 has_captions = True
 
             # Add OCR if available
             if frame.ocr_result:
-                # Use full_text if available, otherwise combine text regions
-                frame_report.ocr_text = frame.ocr_result.full_text
+                frame_report.ocr_text = frame.ocr_result.text
                 frame_report.ocr_confidence = frame.ocr_result.average_confidence
-                frame_report.num_text_regions = len(frame.ocr_result.text_regions)
+                frame_report.num_text_regions = len(frame.ocr_result.blocks)
                 has_ocr = True
 
             # Add object detection if available
@@ -331,8 +334,11 @@ class ReportGenerator:
 
         frame_report: FrameReport
         for frame_report in frame_reports:
-            if frame_report.caption_cost is not None and frame_report.caption_cost > 0:
-                total_cost += frame_report.caption_cost
+            if (
+                frame_report.caption_cost_usd is not None
+                and frame_report.caption_cost_usd > 0
+            ):
+                total_cost += frame_report.caption_cost_usd
                 frames_with_cost += 1
             if frame_report.caption_tokens is not None:
                 total_tokens += frame_report.caption_tokens
@@ -448,7 +454,9 @@ class ReportGenerator:
         fieldnames = ["frame_number", "timestamp", "scene_number"]
 
         if customization.include_visual_analysis:
-            fieldnames.extend(["caption", "caption_confidence", "quality_score"])
+            fieldnames.extend(
+                ["caption", "caption_tokens", "caption_cost_usd", "quality_score"]
+            )
 
         if customization.include_ocr:
             fieldnames.extend(["ocr_text", "ocr_confidence", "num_text_regions"])
@@ -477,7 +485,8 @@ class ReportGenerator:
                     row.update(
                         {
                             "caption": frame.get("caption", ""),
-                            "caption_confidence": frame.get("caption_confidence", ""),
+                            "caption_tokens": frame.get("caption_tokens", ""),
+                            "caption_cost_usd": frame.get("caption_cost_usd", ""),
                             "quality_score": frame.get("quality_score", ""),
                         }
                     )

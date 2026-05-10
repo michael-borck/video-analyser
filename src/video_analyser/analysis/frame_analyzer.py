@@ -354,9 +354,9 @@ class FrameAnalysisPipeline:
 
         for scene_analysis in visual_result.scene_analyses:
             for frame in scene_analysis.frames:
-                if frame.caption_result and frame.caption_result.caption:
+                if frame.caption_result and frame.caption_result.text:
                     frames_with_captions += 1
-                if frame.ocr_result and frame.ocr_result.full_text:
+                if frame.ocr_result and frame.ocr_result.text:
                     frames_with_ocr += 1
                 if (
                     frame.object_detection_result
@@ -447,7 +447,7 @@ class FrameAnalysisPipeline:
                 1
                 for scene in visual_result.scene_analyses
                 if any(
-                    frame.ocr_result and len(frame.ocr_result.text_regions) > 5
+                    frame.ocr_result and len(frame.ocr_result.blocks) > 5
                     for frame in scene.frames
                 )
             )
@@ -457,12 +457,16 @@ class FrameAnalysisPipeline:
                 )
 
         if metrics.frames_with_objects > 0:
+            # Layout types come from presentation_classifier; "single-presenter"
+            # and "slide-only" both indicate a presentation/lecture frame.
+            presentation_layouts = {"single-presenter", "slide-only", "multi-presenter"}
             presentation_scenes = sum(
                 1
                 for scene in visual_result.scene_analyses
                 if any(
                     frame.object_detection_result
-                    and frame.object_detection_result.layout_type == "slide"
+                    and frame.object_detection_result.layout_type
+                    in presentation_layouts
                     for frame in scene.frames
                 )
             )
@@ -521,13 +525,14 @@ class FrameAnalysisPipeline:
         # Find dominant layout type
         dominant_layout: str = max(layout_counts.items(), key=lambda x: x[1])[0]
 
-        # Map to content type
+        # Map presentation_classifier layout names to high-level content types.
         content_type_mapping: dict[str, str] = {
-            "slide": "presentation",
-            "video_presentation": "lecture",
-            "document": "document_review",
-            "whiteboard": "tutorial",
-            "video": "general_video",
+            "slide-only": "presentation",
+            "single-presenter": "presentation",
+            "multi-presenter": "lecture",
+            "audience-only": "audience",
+            "empty": "unknown",
+            "mixed": "mixed_content",
         }
 
         return content_type_mapping.get(dominant_layout, "mixed_content")

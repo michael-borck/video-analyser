@@ -571,24 +571,24 @@ class TestFrameAnalysisPipeline:
         assert "performance" in summary
 
     def test_determine_content_type(self, pipeline):
-        """Test content type determination."""
-        # Create mock visual result with slide layout. ObjectDetectionResult is
-        # now an adapter class in visual_analyzer.py — image-analyser owns the
-        # underlying detector.
-        from video_analyser.analysis.visual_analyzer import ObjectDetectionResult
+        """Test content type determination.
 
-        mock_obj_result = ObjectDetectionResult(
-            detected_objects=[],
-            total_objects=0,
-            processing_time=0.1,
-            frame_width=640,
-            frame_height=480,
-            element_counts={},
-            high_confidence_objects=0,
-            average_confidence=0.0,
-            layout_type="slide",
+        Object detections are now post-processed into a ``PresentationLayout``
+        by ``presentation_classifier``; ``layout_type`` is one of the
+        domain-specific labels (``slide-only``, ``single-presenter``, ...).
+        """
+        from video_analyser.analysis.presentation_classifier import (
+            PresentationLayout,
+        )
+
+        mock_obj_result = PresentationLayout(
+            objects=[],
             has_presenter=False,
+            has_screen=True,
+            presenter_count=0,
             dominant_element=None,
+            element_counts={},
+            layout_type="slide-only",
         )
 
         from tests.analysis.test_visual_analyzer import create_test_quality_metrics

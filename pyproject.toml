@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "video-analyser"
-version = "0.6.1"
+version = "0.7.0"
 description = "Video analysis tool — extracts frames, transcripts, and quality metrics for the analyser family"
 authors = [{name = "Michael Borck", email = "michael@example.com"}]
 readme = "README.md"
@@ -38,7 +38,7 @@ dependencies = [
     # to image-analyser. The [ml,ocr,api] extras pull in transformers, pytesseract,
     # easyocr, and the Anthropic/OpenAI/Google API clients used by image-analyser
     # internally — so they do not need to be declared here directly.
-    "image-analyser[ml,ocr,api]>=0.1.2",
+    "image-analyser[ml,ocr,api]>=0.1.3",
 
     # API client for AI-generated text feedback (cli.py uses this directly,
     # independent of image captioning).
