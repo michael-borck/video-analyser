@@ -664,7 +664,24 @@ class TestFrameExtractor:
                 video_path.unlink()
 
     def test_assess_frame_quality(self, frame_extractor, sample_frame):
-        """Test frame quality assessment."""
+        """Test frame quality assessment.
+
+        ``sample_frame`` is a deterministic fixture — a black canvas with a
+        centred grey square and a smaller centred white square. With the
+        mock_config thresholds (blur=100, contrast=20, brightness range
+        [50,200]), this fixture lands in known buckets:
+
+        - brightness ~37 (mostly-black canvas) -> "poor" (outside [50,200])
+        - contrast ~68 (sharp black/grey/white transitions) -> "excellent"
+          (>= 2 * contrast_threshold = 40)
+        - blur ~939 (sharp synthetic edges) -> "excellent"
+          (>= 2 * blur_threshold = 200)
+
+        The previous version of this test only asserted "category in enum"
+        and "score >= 0", which would still pass even if the categorizer
+        wholesale reversed its semantics. These bucket assertions pin the
+        deterministic output to the fixture's actual physical properties.
+        """
         quality_metrics = frame_extractor._assess_frame_quality(sample_frame)
 
         assert isinstance(quality_metrics, FrameQualityMetrics)
@@ -691,6 +708,22 @@ class TestFrameExtractor:
             "fair",
             "poor",
         ]
+
+        # Deterministic-bucket assertions for this specific fixture.
+        # The mostly-black canvas has mean brightness well below the
+        # configured min (50), so it must be flagged "poor".
+        assert quality_metrics.brightness_category == "poor", (
+            f"Mostly-black sample_frame should bucket brightness as 'poor'; "
+            f"got '{quality_metrics.brightness_category}' "
+            f"(score={quality_metrics.brightness_score:.1f})"
+        )
+        # Sharp synthetic edges produce a Laplacian variance well above
+        # 2 * blur_threshold (200), so blur should be "excellent".
+        assert quality_metrics.blur_category == "excellent", (
+            f"Sharp-edged sample_frame should bucket blur as 'excellent'; "
+            f"got '{quality_metrics.blur_category}' "
+            f"(score={quality_metrics.blur_score:.1f})"
+        )
 
     def test_assess_frame_quality_blur_detection(
         self, frame_extractor, sharp_frame, blur_frame

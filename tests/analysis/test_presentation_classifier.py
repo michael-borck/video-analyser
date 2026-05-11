@@ -102,6 +102,42 @@ def test_layout_slide_only() -> None:
     assert layout.has_presenter is False
 
 
+def test_layout_slide_only_with_book() -> None:
+    """``book`` is mapped to SLIDE (slide deck on a screen) and SLIDE counts
+    toward ``has_screen``, so a single book detection should yield the
+    ``slide-only`` layout. The existing ``test_layout_slide_only`` only
+    exercises the ``tv`` -> SCREEN path; this test pins the parallel
+    ``book`` -> SLIDE path so a future change to the COCO mapping that
+    accidentally drops SLIDE from has_screen aggregation fails loudly.
+    """
+    objs = [_make_obj("book", 0.9)]
+    layout = classify_objects(objs)
+    assert layout.layout_type == "slide-only"
+    assert layout.has_screen is True  # SLIDE participates in has_screen
+    assert layout.has_presenter is False
+    assert layout.element_counts[PresentationElement.SLIDE] == 1
+
+
+def test_layout_presenter_only_no_screen() -> None:
+    """A single ``person`` detection with no screen currently buckets as
+    ``mixed`` (not ``single-presenter``, which requires has_screen=True).
+
+    This pins the current behaviour: ``_infer_layout`` only reports
+    ``single-presenter`` when both presenter_count == 1 *and* has_screen.
+    A presenter standing in front of a non-detected screen — or doing a
+    talking-head intro before the slides come up — falls through to
+    ``mixed``. If we ever decide that case should be ``single-presenter``
+    instead, this test must be updated *intentionally* rather than break
+    silently.
+    """
+    objs = [_make_obj("person", 0.95)]
+    layout = classify_objects(objs)
+    assert layout.has_presenter is True
+    assert layout.has_screen is False
+    assert layout.presenter_count == 1
+    assert layout.layout_type == "mixed"
+
+
 def test_layout_audience_only() -> None:
     objs = [_make_obj("chair", 0.9), _make_obj("chair", 0.85)]
     layout = classify_objects(objs)

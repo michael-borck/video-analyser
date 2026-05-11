@@ -507,9 +507,18 @@ class TestQualityReporting:
         assert "color_diversity" in metrics
 
     def test_noise_metrics_analysis(self, frame_extractor):
-        """Test noise metrics analysis."""
-        # Create noisy frame
-        gray_noisy = np.random.randint(0, 256, (100, 100), dtype=np.uint8)
+        """Test noise metrics analysis.
+
+        A uniform-random frame is the worst case for the Laplacian high-pass
+        noise estimator: every pixel is independent of its neighbours, so the
+        noise std is dominated by the pixel-to-pixel variance itself. We pin
+        the bucket to ``high`` or ``very_high`` rather than just "in the
+        enum" — landing in ``low``/``moderate`` would mean the categorizer
+        thresholds drifted out from under us.
+        """
+        # Use a fixed seed so the test is deterministic across runs.
+        rng = np.random.default_rng(seed=42)
+        gray_noisy = rng.integers(0, 256, size=(100, 100), dtype=np.uint8)
 
         metrics = frame_extractor._analyze_noise_metrics(gray_noisy)
 
@@ -517,16 +526,21 @@ class TestQualityReporting:
         assert "noise_estimate_gaussian" in metrics
         assert "signal_to_noise_ratio" in metrics
         assert "noise_level" in metrics
-        assert metrics["noise_level"] in [
-            "very_low",
-            "low",
-            "moderate",
-            "high",
-            "very_high",
-        ]
+        assert metrics["noise_level"] in {"high", "very_high"}, (
+            f"Expected uniform-random noise to bucket as high/very_high; "
+            f"got {metrics['noise_level']} (std={metrics['noise_std_laplacian']:.2f})"
+        )
 
     def test_composition_metrics_analysis(self, frame_extractor):
-        """Test composition metrics analysis."""
+        """Test composition metrics analysis.
+
+        A perfectly centered subject with sharp edges should produce a focus
+        point essentially *at* the centre — the gradient mass is symmetric
+        about the centre lines. We pin distance_from_center < 0.1 (instead of
+        the previous >= 0 tautology) so any future regression that moves the
+        focus-point detector off-centre by more than ~10% of the frame
+        diagonal fails loudly.
+        """
         # Create frame with clear subject in center
         frame = np.zeros((300, 400, 3), dtype=np.uint8)
         # Add white rectangle in center
@@ -547,7 +561,12 @@ class TestQualityReporting:
         # Check focus point
         assert 0 <= metrics["focus_point"]["x"] <= 1
         assert 0 <= metrics["focus_point"]["y"] <= 1
-        assert metrics["focus_point"]["distance_from_center"] >= 0
+        # Centered subject -> focus point should be at the centre, not just
+        # "somewhere on the canvas". Tightened from >= 0 (always true).
+        assert metrics["focus_point"]["distance_from_center"] < 0.1, (
+            f"Centered white square should produce focus point near centre; "
+            f"got distance_from_center={metrics['focus_point']['distance_from_center']:.3f}"
+        )
 
         # Check balance scores
         assert 0 <= metrics["balance"]["overall"] <= 1

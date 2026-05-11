@@ -676,8 +676,16 @@ class TestFrameAnalysisPipelineFactory:
 class TestPipelineIntegration:
     """Integration tests for the pipeline."""
 
+    @pytest.mark.slow
     def test_full_pipeline_workflow(self, test_video):
-        """Test complete pipeline workflow."""
+        """Test complete pipeline workflow.
+
+        Marked ``slow`` because this is the only test in the default suite
+        that constructs a real ``FrameAnalysisPipeline`` with object
+        detection enabled — which lazily pulls the COCO/YOLO model weights
+        through ``ImageAnalyser`` on first use. Default suite (-m "not slow")
+        skips it; opt in with ``pytest -m slow``.
+        """
         # Create pipeline with all analyses enabled
         config = VideoAnalyserConfig(
             visual_analysis=VisualAnalysisConfig(

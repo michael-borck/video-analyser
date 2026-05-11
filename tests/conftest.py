@@ -175,19 +175,14 @@ def mock_analysis_result() -> dict:
     }
 
 
-def pytest_configure(config: pytest.Config) -> None:
-    """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "video: marks tests that require video processing"
-    )
-    config.addinivalue_line(
-        "markers", "audio: marks tests that require audio processing"
-    )
-    config.addinivalue_line("markers", "ai: marks tests that require AI/ML models")
-    config.addinivalue_line("markers", "integration: marks tests as integration tests")
-    config.addinivalue_line(
-        "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
-    )
+def pytest_configure(config: pytest.Config) -> None:  # noqa: ARG001
+    """Configure pytest.
+
+    Marker registration lives in pyproject.toml's [tool.pytest.ini_options]
+    section so a single source of truth governs the family-wide --strict-markers
+    contract. This hook is preserved as a no-op so future per-session config
+    has a place to land without re-introducing the duplicate-registration trap.
+    """
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list) -> None:  # noqa: ARG001
