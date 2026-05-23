@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "video-analyser"
-version = "0.7.1"
+version = "0.7.2"
 description = "Video analysis tool — extracts frames, transcripts, and quality metrics for the analyser family"
 authors = [{name = "Michael Borck", email = "michael@example.com"}]
 readme = "README.md"
