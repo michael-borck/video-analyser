@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "video-analyser"
-version = "0.8.0"
+version = "0.9.0"
 description = "Video analysis tool — extracts frames, transcripts, and quality metrics for the analyser family"
 authors = [{name = "Michael Borck", email = "michael@example.com"}]
 readme = "README.md"
@@ -19,21 +19,21 @@ classifiers = [
 ]
 dependencies = [
     # Lens family contract scaffolding (manifest, /health, /manifest, CORS).
-    # NOTE: speech stays in-tree (word-level, scene-aware) for now; composing onto
-    # speech-analyser is deferred until that member gains word-level timestamps.
     "lens-contract>=0.2.0",
+    # Speech transcription is delegated to speech-analyser (word-level since its
+    # 0.5.0); video no longer runs its own whisper engine.
+    "speech-analyser>=0.5.0",
     # Core dependencies
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
     "rich>=13.7.0",
-    "typer>=0.9.0",
 
     # Video processing
     "opencv-python>=4.8.0",
     "ffmpeg-python>=0.2.0",
 
-    # AI/ML models (CPU-only for development)
-    "faster-whisper>=0.10.0",
+    # AI/ML models (CPU-only for development). Whisper now comes via speech-analyser;
+    # torch/torchvision remain for speaker diarization (pyannote) + image-analyser.
     "torch>=2.2.0",
     "torchvision>=0.17.0",
     "Pillow>=10.1.0",
@@ -71,6 +71,7 @@ dependencies = [
 # the published wheel (the PyPI pin remains).
 [tool.uv.sources]
 lens-contract = { path = "../lens-contract", editable = true }
+speech-analyser = { path = "../speech-analyser", editable = true }
 
 [project.optional-dependencies]
 dev = [
