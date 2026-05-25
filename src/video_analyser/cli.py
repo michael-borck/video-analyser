@@ -9,7 +9,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import typer
 from rich.console import Console
 from rich.panel import Panel
 
@@ -22,99 +21,27 @@ if TYPE_CHECKING:
     from video_analyser.analysis.rubric_system import RubricRepository
 
 console = Console()
-app = typer.Typer(help="Video Analyser - Video Analysis Application")
 
 
-@app.command()
-def analyze(
-    video_path: Path | None = typer.Argument(
-        None, help="Path to video file to analyze"
-    ),
-    output_dir: Path | None = typer.Option(
-        None, "--output", "-o", help="Output directory for reports"
-    ),
-    config_file: Path | None = typer.Option(
-        None, "--config", "-c", help="Configuration file path"
-    ),
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="Enable verbose output"
-    ),
-    api_provider: str | None = typer.Option(
-        None,
-        "--api-provider",
-        help="API provider (anthropic, openai, google, openrouter) for captioning and grading",
-    ),
-    api_model: str | None = typer.Option(
-        None,
-        "--api-model",
-        help="API model to use (e.g., claude-haiku-4-5-20251001, gpt-4o)",
-    ),
-    use_api: bool = typer.Option(
-        False,
-        "--use-api",
-        help="Use API for captioning instead of local model",
-    ),
-    grade: bool = typer.Option(
-        False,
-        "--grade",
-        "-g",
-        help="Enable grading with feedback (uses defaults: general rubric, student audience, summary detail)",
-    ),
-    rubric_type: str | None = typer.Option(
-        None,
-        "--rubric-type",
-        "-t",
-        help="Rubric type for grading (academic, business, teaching, technical, creative, sales, legal, medical, political, entertainment, general). Default: general",
-    ),
-    rubric_file: Path | None = typer.Option(
-        None, "--rubric-file", "-r", help="Path to custom rubric JSON file for grading"
-    ),
-    feedback_audience: str | None = typer.Option(
-        None,
-        "--feedback-audience",
-        help="Target audience for feedback: student (developmental, encouraging) or teacher (assessment-focused). Default: student",
-    ),
-    feedback_detail: str | None = typer.Option(
-        None,
-        "--feedback-detail",
-        help="Level of detail in feedback: short (assessment only), summary (strengths + improvements), long (full detailed feedback). Default: summary",
-    ),
-    save_all_formats: bool = typer.Option(
-        False,
-        "--save-all-formats",
-        help="Save feedback in all formats (short, summary, long) as separate files",
-    ),
-    fast_mode: bool = typer.Option(
-        False,
-        "--fast",
-        help="Fast mode: analyze transcript only (skip visual analysis for ~2-3x speed improvement)",
-    ),
-    parallel_processing: bool = typer.Option(
-        True,
-        "--parallel/--no-parallel",
-        help="Enable parallel processing for faster analysis (default: enabled)",
-    ),
-    use_cache: bool = typer.Option(
-        True,
-        "--cache/--no-cache",
-        help="Use caching to resume after crashes and avoid reprocessing (default: enabled)",
-    ),
-) -> None:
-    """
-    Analyze a video file for presentation feedback.
+def _cmd_analyse(args) -> None:
+    """Analyse a video file (the family's default / bare-positional command)."""
+    video_path = args.video_path
+    output_dir = args.output
+    config_file = args.config
+    verbose = args.verbose
+    api_provider = args.api_provider
+    api_model = args.api_model
+    use_api = args.use_api
+    grade = args.grade
+    rubric_type = args.rubric_type
+    rubric_file = args.rubric_file
+    feedback_audience = args.feedback_audience
+    feedback_detail = args.feedback_detail
+    save_all_formats = args.save_all_formats
+    fast_mode = args.fast
+    parallel_processing = args.parallel
+    use_cache = args.cache
 
-    If --grade flag or rubric options (--rubric-type or --rubric-file) are provided,
-    generates LLM-based grading feedback in addition to the analysis report.
-
-    If no video path is provided, launches the web interface.
-
-    Examples:
-        video-analyser analyze video.mp4
-        video-analyser analyze video.mp4 --grade
-        video-analyser analyze video.mp4 --grade --rubric-type academic --feedback-detail long
-        video-analyser analyze video.mp4 --rubric-type academic --feedback-audience teacher
-        video-analyser analyze video.mp4 --rubric-file my-rubric.json --api-provider anthropic
-    """
     # Load configuration
     config = load_config(config_file) if config_file else get_config()
 
@@ -143,43 +70,32 @@ def analyze(
         console.print("[yellow]Debug mode enabled[/yellow]")
         logger.debug("Debug mode is active")
 
-    if video_path:
-        # CLI mode - analyze specific video
-        # Show API settings if using API
-        if config.visual_analysis.captioning_backend == "api":
-            console.print(
-                f"[dim]Using API: {config.visual_analysis.api_provider} "
-                f"({config.visual_analysis.api_model})[/dim]"
-            )
-
-        _analyze_video_cli(
-            video_path=video_path,
-            output_dir=output_dir,
-            config=config,
-            config_file=config_file,
-            verbose=verbose,
-            logger=logger,
-            grade=grade,
-            rubric_type=rubric_type,
-            rubric_file=rubric_file,
-            feedback_audience=feedback_audience,
-            feedback_detail=feedback_detail,
-            save_all_formats=save_all_formats,
-            fast_mode=fast_mode,
-            parallel_processing=parallel_processing,
-            use_cache=use_cache,
-            api_provider=api_provider,
-            api_model=api_model,
+    # Show API settings if using API
+    if config.visual_analysis.captioning_backend == "api":
+        console.print(
+            f"[dim]Using API: {config.visual_analysis.api_provider} "
+            f"({config.visual_analysis.api_model})[/dim]"
         )
-    else:
-        # Web UI mode
-        logger.info("Launching web interface")
-        console.print("[green]Launching web interface...[/green]")
 
-        # TODO: Import and launch Gradio interface
-        logger.warning("Web interface not yet implemented")
-        console.print("[yellow]Web interface not yet implemented.[/yellow]")
-        console.print("[dim]Run with --help for available options.[/dim]")
+    _analyze_video_cli(
+        video_path=video_path,
+        output_dir=output_dir,
+        config=config,
+        config_file=config_file,
+        verbose=verbose,
+        logger=logger,
+        grade=grade,
+        rubric_type=rubric_type,
+        rubric_file=rubric_file,
+        feedback_audience=feedback_audience,
+        feedback_detail=feedback_detail,
+        save_all_formats=save_all_formats,
+        fast_mode=fast_mode,
+        parallel_processing=parallel_processing,
+        use_cache=use_cache,
+        api_provider=api_provider,
+        api_model=api_model,
+    )
 
 
 def _analyze_video_cli(
@@ -444,7 +360,7 @@ def _analyze_video_cli(
                             f"[red]✗ Unknown rubric type: {effective_rubric_type}[/red]\n"
                             f"[dim]Available: academic, business, teaching, technical, creative, sales, legal, medical, political, entertainment, general[/dim]"
                         )
-                        raise typer.Exit(1)
+                        raise SystemExit(1)
                     console.print(
                         f"[cyan]→[/cyan] Using rubric: [bold]{rubric.name}[/bold]"
                     )
@@ -453,7 +369,7 @@ def _analyze_video_cli(
                         console.print(
                             f"[red]✗ Rubric file not found: {rubric_file}[/red]"
                         )
-                        raise typer.Exit(1)
+                        raise SystemExit(1)
                     import json
 
                     with open(rubric_file) as f:
@@ -532,12 +448,12 @@ def _analyze_video_cli(
                     console.print(f"  [bold]{feedback_file}[/bold]")
                     logger.info(f"Grading feedback saved to {feedback_file}")
 
-            except typer.Exit:
+            except SystemExit:
                 raise
             except Exception as e:
                 console.print(f"[red]✗ Grading error: {str(e)}[/red]")
                 logger.error(f"Grading error: {e}", exc_info=verbose)
-                raise typer.Exit(1) from e
+                raise SystemExit(1) from e
 
     except VideoProcessingError as e:
         error_msg = str(e)
@@ -552,24 +468,10 @@ def _analyze_video_cli(
         sys.exit(1)
 
 
-@app.command()
-def version() -> None:
-    """Show version information."""
-    from video_analyser import __version__
-
-    console.print(f"Video Analyser version {__version__}")
-
-
-@app.command()
-def config(
-    show_all: bool = typer.Option(
-        False, "--all", help="Show all configuration options"
-    ),
-    config_file: Path | None = typer.Option(
-        None, "--config", "-c", help="Configuration file path"
-    ),
-) -> None:
+def _cmd_config(args) -> None:
     """Show current configuration."""
+    show_all = args.all
+    config_file = args.config
     if config_file:
         config_obj = load_config(config_file)
         console.print(f"[blue]Using config file:[/blue] {config_file}")
@@ -608,36 +510,14 @@ def config(
         console.print("\n[dim]Use --all to see all configuration options[/dim]")
 
 
-@app.command()
-def rubric(
-    action: str = typer.Argument(
-        ..., help="Action: list, show, create, export, delete"
-    ),
-    rubric_type: str | None = typer.Option(
-        None,
-        "--type",
-        "-t",
-        help="Rubric type (academic, business, teaching, technical, creative, sales, legal, medical, political, entertainment, general)",
-    ),
-    rubric_id: str | None = typer.Option(
-        None, "--id", "-i", help="Rubric ID (for show/delete actions)"
-    ),
-    output: Path | None = typer.Option(
-        None, "--output", "-o", help="Output file path (for export action)"
-    ),
-    rubrics_dir: Path = typer.Option(
-        Path("rubrics"), "--dir", "-d", help="Directory for storing rubrics"
-    ),
-) -> None:
-    """Manage rubrics for assessment.
+def _cmd_rubric(args) -> None:
+    """Manage rubrics for assessment (actions: list, show, create, export, delete)."""
+    action = args.action
+    rubric_type = args.type
+    rubric_id = args.id
+    output = args.output
+    rubrics_dir = args.dir
 
-    Actions:
-        list    - List all available rubrics (default and custom)
-        show    - Show details of a specific rubric
-        create  - Create a new rubric from a default template
-        export  - Export a rubric to JSON file
-        delete  - Delete a custom rubric
-    """
     from video_analyser.analysis.default_rubrics import list_default_rubrics
     from video_analyser.analysis.rubric_system import RubricRepository
 
@@ -650,7 +530,7 @@ def rubric(
         elif action.lower() == "show":
             if not rubric_id:
                 console.print("[red]Error: --id required for show action[/red]")
-                raise typer.Exit(1)
+                raise SystemExit(1)
             _rubric_show(repo, rubric_id)
 
         elif action.lower() == "create":
@@ -659,7 +539,7 @@ def rubric(
                 console.print(
                     f"[dim]Available types: {', '.join(list_default_rubrics())}[/dim]"
                 )
-                raise typer.Exit(1)
+                raise SystemExit(1)
             _rubric_create(repo, rubric_type)
 
         elif action.lower() == "export":
@@ -667,13 +547,13 @@ def rubric(
                 console.print(
                     "[red]Error: --id and --output required for export action[/red]"
                 )
-                raise typer.Exit(1)
+                raise SystemExit(1)
             _rubric_export(repo, rubric_id, output)
 
         elif action.lower() == "delete":
             if not rubric_id:
                 console.print("[red]Error: --id required for delete action[/red]")
-                raise typer.Exit(1)
+                raise SystemExit(1)
             _rubric_delete(repo, rubric_id)
 
         else:
@@ -681,11 +561,11 @@ def rubric(
             console.print(
                 "[dim]Available actions: list, show, create, export, delete[/dim]"
             )
-            raise typer.Exit(1)
+            raise SystemExit(1)
 
     except Exception as e:
         console.print(f"[red]Error: {str(e)}[/red]")
-        raise typer.Exit(1) from e
+        raise SystemExit(1) from e
 
 
 def _rubric_list(repo: "RubricRepository") -> None:
@@ -733,7 +613,7 @@ def _rubric_show(repo: "RubricRepository", rubric_id: str) -> None:
     rubric = repo.load(rubric_id)
     if not rubric:
         console.print(f"[red]Rubric not found: {rubric_id}[/red]")
-        raise typer.Exit(1)
+        raise SystemExit(1)
 
     console.print(f"\n[bold blue]{rubric.name}[/bold blue]")
     if rubric.description:
@@ -767,7 +647,7 @@ def _rubric_create(repo: "RubricRepository", rubric_type: str) -> None:
     rubric = get_default_rubric(rubric_type)
     if not rubric:
         console.print(f"[red]Unknown rubric type: {rubric_type}[/red]")
-        raise typer.Exit(1)
+        raise SystemExit(1)
 
     repo.save(rubric)
     console.print(f"\n[green]✓[/green] Created rubric: [bold]{rubric.name}[/bold]")
@@ -785,7 +665,7 @@ def _rubric_export(repo: "RubricRepository", rubric_id: str, output_path: Path) 
     rubric = repo.load(rubric_id)
     if not rubric:
         console.print(f"[red]Rubric not found: {rubric_id}[/red]")
-        raise typer.Exit(1)
+        raise SystemExit(1)
 
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -804,9 +684,9 @@ def _rubric_delete(repo: "RubricRepository", rubric_id: str) -> None:
     """Delete a custom rubric."""
     if not repo.load(rubric_id):
         console.print(f"[red]Rubric not found: {rubric_id}[/red]")
-        raise typer.Exit(1)
+        raise SystemExit(1)
 
-    confirm = typer.confirm(f"Delete rubric {rubric_id}?")
+    confirm = input(f"Delete rubric {rubric_id}? [y/N] ").strip().lower() in ("y", "yes")
     if not confirm:
         console.print("[dim]Cancelled[/dim]")
         return
@@ -838,7 +718,7 @@ def _generate_grading_feedback(
         Generated feedback text
 
     Raises:
-        typer.Exit: If API key not found or LLM call fails
+        SystemExit: If API key not found or LLM call fails
     """
     from video_analyser.utils.api_keys import get_api_key
 
@@ -864,7 +744,7 @@ def _generate_grading_feedback(
             f"[red]✗ No API key found for {provider}[/red]\n"
             f"[dim]Set {provider.upper()}_API_KEY environment variable[/dim]"
         )
-        raise typer.Exit(1)
+        raise SystemExit(1)
 
     # Build prompt for LLM
     prompt = _build_grading_prompt(rubric, analysis_data, audience, detail)
@@ -910,7 +790,7 @@ def _generate_grading_feedback(
 
     if not feedback_text:
         console.print("[red]✗ Failed to generate feedback[/red]")
-        raise typer.Exit(1)
+        raise SystemExit(1)
 
     # Validate and ensure scoring is included for short feedback
     if detail == "short":
@@ -1313,9 +1193,67 @@ def _build_grading_prompt(
 
 
 def main() -> None:
-    """Entry point for the CLI."""
-    app()
+    """Entry point for the CLI (argparse + lens-contract, the family pattern)."""
+    import argparse
+    from importlib.metadata import version as _pkg_version
+
+    from lens_contract import run_contract_subcommands
+
+    from video_analyser.manifest import MANIFEST
+
+    # `serve` and `manifest` are the family's shared subcommands (lens-contract).
+    if run_contract_subcommands(
+        MANIFEST,
+        app_path="video_analyser.api:app",
+        default_port=8002,
+        env_prefix="VIDEO_ANALYSER",
+    ):
+        return
+
+    argv = sys.argv[1:]
+
+    # Video-specific subcommands beyond the contract.
+    if argv and argv[0] == "config":
+        p = argparse.ArgumentParser(prog="video-analyser config")
+        p.add_argument("--all", action="store_true", help="Show all configuration options")
+        p.add_argument("--config", "-c", type=Path, default=None, help="Configuration file path")
+        _cmd_config(p.parse_args(argv[1:]))
+        return
+    if argv and argv[0] == "rubric":
+        p = argparse.ArgumentParser(prog="video-analyser rubric")
+        p.add_argument("action", help="list, show, create, export, delete")
+        p.add_argument("--type", "-t", default=None, help="Rubric type")
+        p.add_argument("--id", "-i", default=None, help="Rubric ID (show/delete)")
+        p.add_argument("--output", "-o", type=Path, default=None, help="Output file path (export)")
+        p.add_argument("--dir", "-d", type=Path, default=Path("rubrics"), help="Rubric storage directory")
+        _cmd_rubric(p.parse_args(argv[1:]))
+        return
+
+    # Default (bare positional) command: analyse a video.
+    p = argparse.ArgumentParser(
+        prog="video-analyser",
+        description="Analyse a video file for presentation feedback",
+        epilog="subcommands: `serve`, `manifest`, `config`, `rubric` (run each with -h)",
+    )
+    p.add_argument("--version", action="version", version=_pkg_version("video-analyser"))
+    p.add_argument("video_path", type=Path, help="Path to the video file to analyse")
+    p.add_argument("--output", "-o", type=Path, default=None, help="Output directory for reports")
+    p.add_argument("--config", "-c", type=Path, default=None, help="Configuration file path")
+    p.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
+    p.add_argument("--api-provider", dest="api_provider", default=None, help="API provider for captioning/grading")
+    p.add_argument("--api-model", dest="api_model", default=None, help="API model")
+    p.add_argument("--use-api", dest="use_api", action="store_true", help="Use API for captioning")
+    p.add_argument("--grade", "-g", action="store_true", help="Enable LLM grading feedback")
+    p.add_argument("--rubric-type", "-t", dest="rubric_type", default=None, help="Rubric type for grading")
+    p.add_argument("--rubric-file", "-r", dest="rubric_file", type=Path, default=None, help="Custom rubric JSON for grading")
+    p.add_argument("--feedback-audience", dest="feedback_audience", default=None, help="student | teacher")
+    p.add_argument("--feedback-detail", dest="feedback_detail", default=None, help="short | summary | long")
+    p.add_argument("--save-all-formats", dest="save_all_formats", action="store_true", help="Save all feedback formats")
+    p.add_argument("--fast", action="store_true", help="Fast mode: transcript only (skip visual analysis)")
+    p.add_argument("--no-parallel", dest="parallel", action="store_false", help="Disable parallel processing")
+    p.add_argument("--no-cache", dest="cache", action="store_false", help="Disable caching")
+    _cmd_analyse(p.parse_args(argv))
 
 
 if __name__ == "__main__":
-    app()
+    main()

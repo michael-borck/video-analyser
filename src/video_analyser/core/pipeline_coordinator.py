@@ -627,6 +627,73 @@ class PipelineCoordinator:
             logger.error(f"Visual analysis failed: {e}")
             raise
 
+    def analyse(self, video_path: Path | str, fast_mode: bool = False) -> "VideoAnalysis":
+        """Run the full pipeline and return a typed VideoAnalysis (no report files).
+
+        The lens-contract entry point used by the CLI and POST /analyse: it
+        orchestrates the same phases as the CLI's report flow but returns the
+        aggregate model instead of writing JSON/HTML to disk. Sub-phase failures
+        (speech, visual) are captured in `errors` rather than aborting the whole run.
+        """
+        import time
+
+        from video_analyser.models import VideoAnalysis
+
+        video_path = Path(video_path)
+        start = time.time()
+        errors: list[str] = []
+
+        result = self.analyze_video(
+            video_path=video_path,
+            extract_audio=True,
+            detect_scenes=True,
+            extract_frames=not fast_mode,
+        )
+        if not result.success:
+            return VideoAnalysis(
+                input=str(video_path),
+                video_info=result.video_info,
+                processing_time=time.time() - start,
+                success=False,
+                errors=[result.error_message or "video processing failed"],
+            )
+
+        transcription = None
+        speech = None
+        if result.audio_info:
+            try:
+                sp = self.analyze_speech(
+                    audio_path=result.audio_info.file_path,
+                    scene_result=result.scene_result,
+                )
+                transcription = sp.get("transcription")
+                speech = sp.get("speech_analysis")
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"speech analysis failed: {exc}")
+
+        frames: list[Any] = []
+        if not fast_mode and result.frame_infos:
+            try:
+                fa = self.analyze_frames(
+                    frame_paths=[f.frame_path for f in result.frame_infos]
+                )
+                frames = fa.get("frame_analyses", [])
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"visual analysis failed: {exc}")
+
+        return VideoAnalysis(
+            input=str(video_path),
+            video_info=result.video_info,
+            audio_info=result.audio_info,
+            scenes=result.scene_result,
+            transcription=transcription,
+            speech=speech,
+            frames=frames,
+            processing_time=time.time() - start,
+            success=True,
+            errors=errors,
+        )
+
     def generate_reports(
         self,
         video_info: VideoInfo,
