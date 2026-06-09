@@ -10,7 +10,7 @@ Part of the [analyser family](https://github.com/michael-borck/lens-analysers).
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A video analysis application that helps students, educators, and professionals analyze presentations by combining speech transcription, visual analysis, and AI-powered feedback.
+A video analysis engine that extracts signals from presentations — speech transcription, delivery metrics, scene detection, and visual analysis — as structured JSON. (Rubric grading / assessment is intentionally *not* here: it's assessment-aware, so it lives in a lens above the analysers, not in this signal generator.)
 
 > **Status**: Phase 1 MVP in development. Core infrastructure complete, video processing pipeline in progress.
 
@@ -19,7 +19,7 @@ A video analysis application that helps students, educators, and professionals a
 - **Video Processing**: Support for MP4, MOV, AVI, and WebM formats
 - **Speech Analysis**: Automatic transcription with speaking rate and filler word detection
 - **Visual Analysis**: Scene detection with frame captioning and quality assessment
-- **AI Feedback**: Actionable insights and recommendations for improvement
+- **Structured Signals**: Every metric emitted as JSON, ready for downstream assessment tools
 - **Professional Reports**: Interactive HTML and structured JSON outputs
 
 ## Installation

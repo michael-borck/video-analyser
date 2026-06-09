@@ -7,7 +7,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from rich.console import Console
 from rich.panel import Panel
@@ -16,9 +16,6 @@ from video_analyser.core.exceptions import VideoProcessingError
 from video_analyser.core.pipeline_coordinator import PipelineCoordinator
 from video_analyser.utils.config import VideoAnalyserConfig, get_config, load_config
 from video_analyser.utils.progress_display import CLIProgressTracker
-
-if TYPE_CHECKING:
-    from video_analyser.analysis.rubric_system import RubricRepository
 
 console = Console()
 
@@ -32,12 +29,6 @@ def _cmd_analyse(args) -> None:
     api_provider = args.api_provider
     api_model = args.api_model
     use_api = args.use_api
-    grade = args.grade
-    rubric_type = args.rubric_type
-    rubric_file = args.rubric_file
-    feedback_audience = args.feedback_audience
-    feedback_detail = args.feedback_detail
-    save_all_formats = args.save_all_formats
     fast_mode = args.fast
     parallel_processing = args.parallel
     use_cache = args.cache
@@ -84,17 +75,9 @@ def _cmd_analyse(args) -> None:
         config_file=config_file,
         verbose=verbose,
         logger=logger,
-        grade=grade,
-        rubric_type=rubric_type,
-        rubric_file=rubric_file,
-        feedback_audience=feedback_audience,
-        feedback_detail=feedback_detail,
-        save_all_formats=save_all_formats,
         fast_mode=fast_mode,
         parallel_processing=parallel_processing,
         use_cache=use_cache,
-        api_provider=api_provider,
-        api_model=api_model,
     )
 
 
@@ -105,17 +88,9 @@ def _analyze_video_cli(
     config_file: Path | None = None,
     verbose: bool = False,
     logger: logging.Logger = None,
-    grade: bool = False,
-    rubric_type: str | None = None,
-    rubric_file: Path | None = None,
-    feedback_audience: str | None = None,
-    feedback_detail: str | None = None,
-    save_all_formats: bool = False,
     fast_mode: bool = False,
     parallel_processing: bool = True,
     use_cache: bool = True,
-    api_provider: str | None = None,
-    api_model: str | None = None,
 ) -> None:
     """
     Perform video analysis in CLI mode.
@@ -127,13 +102,6 @@ def _analyze_video_cli(
         config_file: Configuration file path (for logging)
         verbose: Verbose output flag
         logger: Logger instance
-        grade: Enable grading with defaults (general rubric, student audience, summary detail)
-        rubric_type: Optional rubric type for grading (academic, business, teaching, technical, creative, sales, legal, medical, political, entertainment, general)
-        rubric_file: Optional custom rubric file for grading
-        feedback_audience: Target audience for feedback (student or teacher)
-        feedback_detail: Level of detail (short, summary, long)
-        api_provider: Optional API provider for grading
-        api_model: Optional API model for grading
     """
     # Validate video path
     video_path_obj = Path(video_path)
@@ -336,125 +304,6 @@ def _analyze_video_cli(
 
         logger.info(f"Analysis complete. Results saved to {output_path}")
 
-        # Phase 5: Grading (if rubric provided or --grade flag set)
-        # Apply defaults if --grade flag is set
-        effective_rubric_type = rubric_type or ("general" if grade else None)
-        effective_audience = feedback_audience or (
-            "student" if (grade or rubric_type or rubric_file) else None
-        )
-        effective_detail = feedback_detail or (
-            "summary" if (grade or rubric_type or rubric_file) else None
-        )
-
-        if effective_rubric_type or rubric_file:
-            console.print("\n[bold cyan]Generating grading feedback...[/bold cyan]")
-            try:
-                from video_analyser.analysis.default_rubrics import get_default_rubric
-                from video_analyser.analysis.rubric_system import Rubric
-
-                # Load rubric
-                if effective_rubric_type:
-                    rubric = get_default_rubric(effective_rubric_type)
-                    if not rubric:
-                        console.print(
-                            f"[red]✗ Unknown rubric type: {effective_rubric_type}[/red]\n"
-                            f"[dim]Available: academic, business, teaching, technical, creative, sales, legal, medical, political, entertainment, general[/dim]"
-                        )
-                        raise SystemExit(1)
-                    console.print(
-                        f"[cyan]→[/cyan] Using rubric: [bold]{rubric.name}[/bold]"
-                    )
-                else:
-                    if not rubric_file or not rubric_file.exists():
-                        console.print(
-                            f"[red]✗ Rubric file not found: {rubric_file}[/red]"
-                        )
-                        raise SystemExit(1)
-                    import json
-
-                    with open(rubric_file) as f:
-                        rubric_data = json.load(f)
-                    rubric = Rubric.from_dict(rubric_data)
-                    console.print(
-                        f"[cyan]→[/cyan] Using rubric: [bold]{rubric.name}[/bold]"
-                    )
-
-                # Show feedback options
-                console.print(
-                    f"[cyan]→[/cyan] Audience: [bold]{effective_audience}[/bold], Detail: [bold]{effective_detail}[/bold]"
-                )
-
-                # Prepare analysis data for grading
-                video_info_dict: dict[str, Any] = {}
-                if hasattr(result.video_info, "model_dump"):
-                    video_info_dict = result.video_info.model_dump()  # type: ignore[attr-defined]
-                elif hasattr(result.video_info, "to_dict"):
-                    video_info_dict = result.video_info.to_dict()  # type: ignore[attr-defined]
-
-                grading_data: dict[str, Any] = {
-                    "video_info": video_info_dict,
-                    "processing_time": processing_time,
-                }
-                if speech_analysis:
-                    grading_data["speech_analysis"] = speech_analysis
-                if visual_analysis:
-                    grading_data["visual_analysis"] = visual_analysis
-
-                if save_all_formats:
-                    # Generate all feedback formats
-                    console.print(
-                        "[cyan]→[/cyan] Generating feedback in all formats..."
-                    )
-                    _generate_all_feedback_formats(
-                        rubric=rubric,
-                        analysis_data=grading_data,
-                        audience=effective_audience or "student",
-                        output_path=output_path,
-                        api_provider=api_provider,
-                        api_model=api_model,
-                    )
-                    console.print(
-                        "[green]✓[/green] All feedback formats saved to output directory"
-                    )
-                else:
-                    # Generate single feedback format
-                    console.print("[cyan]→[/cyan] Generating LLM feedback...")
-                    feedback_text = _generate_grading_feedback(
-                        rubric=rubric,
-                        analysis_data=grading_data,
-                        audience=effective_audience,
-                        detail=effective_detail,
-                        api_provider=api_provider,
-                        api_model=api_model,
-                    )
-
-                    # Save feedback report
-                    timestamp = time.strftime("%Y%m%d_%H%M%S")
-                    detail_suffix = f"_{effective_detail}" if effective_detail else ""
-                    feedback_file = (
-                        output_path / f"feedback{detail_suffix}_{timestamp}.md"
-                    )
-
-                    with open(feedback_file, "w") as f:
-                        f.write("# Presentation Feedback Report\n\n")
-                        f.write(f"**Rubric:** {rubric.name}\n")
-                        f.write(
-                            f"**Generated:** {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                        )
-                        f.write("## Feedback\n\n")
-                        f.write(feedback_text)
-
-                    console.print("[green]✓[/green] Feedback saved to:")
-                    console.print(f"  [bold]{feedback_file}[/bold]")
-                    logger.info(f"Grading feedback saved to {feedback_file}")
-
-            except SystemExit:
-                raise
-            except Exception as e:
-                console.print(f"[red]✗ Grading error: {str(e)}[/red]")
-                logger.error(f"Grading error: {e}", exc_info=verbose)
-                raise SystemExit(1) from e
-
     except VideoProcessingError as e:
         error_msg = str(e)
         progress_tracker.fail_workflow(error_msg)
@@ -510,385 +359,6 @@ def _cmd_config(args) -> None:
         console.print("\n[dim]Use --all to see all configuration options[/dim]")
 
 
-def _cmd_rubric(args) -> None:
-    """Manage rubrics for assessment (actions: list, show, create, export, delete)."""
-    action = args.action
-    rubric_type = args.type
-    rubric_id = args.id
-    output = args.output
-    rubrics_dir = args.dir
-
-    from video_analyser.analysis.default_rubrics import list_default_rubrics
-    from video_analyser.analysis.rubric_system import RubricRepository
-
-    try:
-        repo = RubricRepository(rubrics_dir)
-
-        if action.lower() == "list":
-            _rubric_list(repo)
-
-        elif action.lower() == "show":
-            if not rubric_id:
-                console.print("[red]Error: --id required for show action[/red]")
-                raise SystemExit(1)
-            _rubric_show(repo, rubric_id)
-
-        elif action.lower() == "create":
-            if not rubric_type:
-                console.print("[red]Error: --type required for create action[/red]")
-                console.print(
-                    f"[dim]Available types: {', '.join(list_default_rubrics())}[/dim]"
-                )
-                raise SystemExit(1)
-            _rubric_create(repo, rubric_type)
-
-        elif action.lower() == "export":
-            if not rubric_id or not output:
-                console.print(
-                    "[red]Error: --id and --output required for export action[/red]"
-                )
-                raise SystemExit(1)
-            _rubric_export(repo, rubric_id, output)
-
-        elif action.lower() == "delete":
-            if not rubric_id:
-                console.print("[red]Error: --id required for delete action[/red]")
-                raise SystemExit(1)
-            _rubric_delete(repo, rubric_id)
-
-        else:
-            console.print(f"[red]Unknown action: {action}[/red]")
-            console.print(
-                "[dim]Available actions: list, show, create, export, delete[/dim]"
-            )
-            raise SystemExit(1)
-
-    except Exception as e:
-        console.print(f"[red]Error: {str(e)}[/red]")
-        raise SystemExit(1) from e
-
-
-def _rubric_list(repo: "RubricRepository") -> None:
-    """List all rubrics."""
-    from video_analyser.analysis.default_rubrics import (
-        get_default_rubric,
-        list_default_rubrics,
-    )
-
-    console.print("\n[bold]Available Default Rubrics[/bold]")
-    console.print(
-        "[dim](Can be created with: video-analyser rubric create --type <type>)[/dim]\n"
-    )
-
-    for rubric_type in list_default_rubrics():
-        rubric = get_default_rubric(rubric_type)
-        if rubric:
-            console.print(f"  [cyan]{rubric_type.upper()}[/cyan]")
-            console.print(f"    {rubric.description}")
-            console.print(f"    Categories: {len(rubric.categories)}")
-            total_criteria = sum(len(cat.criteria) for cat in rubric.categories)
-            console.print(f"    Criteria: {total_criteria}\n")
-
-    custom_rubrics = repo.list_rubrics()
-    if custom_rubrics:
-        console.print("[bold]Custom Rubrics[/bold]\n")
-        for rubric in custom_rubrics:
-            status = (
-                "[yellow]Template[/yellow]"
-                if rubric.is_template
-                else "[cyan]Custom[/cyan]"
-            )
-            console.print(f"  {rubric.name} [{status}]")
-            console.print(f"    ID: {rubric.id}")
-            console.print(f"    Categories: {len(rubric.categories)}")
-            console.print(f"    Created: {rubric.created_at.strftime('%Y-%m-%d')}\n")
-    else:
-        console.print(
-            "[dim]No custom rubrics yet. Create one with 'video-analyser rubric create'[/dim]\n"
-        )
-
-
-def _rubric_show(repo: "RubricRepository", rubric_id: str) -> None:
-    """Show details of a rubric."""
-    rubric = repo.load(rubric_id)
-    if not rubric:
-        console.print(f"[red]Rubric not found: {rubric_id}[/red]")
-        raise SystemExit(1)
-
-    console.print(f"\n[bold blue]{rubric.name}[/bold blue]")
-    if rubric.description:
-        console.print(f"[dim]{rubric.description}[/dim]")
-
-    console.print(f"\nID: {rubric.id}")
-    console.print(
-        f"Score Range: {rubric.scoring_scale.min_score}-{rubric.scoring_scale.max_score}"
-    )
-    if rubric.tags:
-        console.print(f"Tags: {', '.join(rubric.tags)}")
-
-    console.print("\n[bold]Categories:[/bold]")
-    for category in rubric.categories:
-        console.print(f"\n  [cyan]{category.name}[/cyan] (weight: {category.weight})")
-        if category.description:
-            console.print(f"  [dim]{category.description}[/dim]")
-        console.print("  Criteria:")
-        for criterion in category.criteria:
-            console.print(f"    • {criterion.name} (weight: {criterion.weight})")
-            if criterion.description:
-                console.print(f"      {criterion.description}")
-
-    console.print()
-
-
-def _rubric_create(repo: "RubricRepository", rubric_type: str) -> None:
-    """Create a rubric from a default template."""
-    from video_analyser.analysis.default_rubrics import get_default_rubric
-
-    rubric = get_default_rubric(rubric_type)
-    if not rubric:
-        console.print(f"[red]Unknown rubric type: {rubric_type}[/red]")
-        raise SystemExit(1)
-
-    repo.save(rubric)
-    console.print(f"\n[green]✓[/green] Created rubric: [bold]{rubric.name}[/bold]")
-    console.print(f"  ID: {rubric.id}")
-    console.print(f"  Categories: {len(rubric.categories)}")
-    total_criteria = sum(len(cat.criteria) for cat in rubric.categories)
-    console.print(f"  Criteria: {total_criteria}")
-    console.print(
-        f"\n[dim]Rubric saved to: {repo.storage_dir / f'{rubric.id}.json'}[/dim]\n"
-    )
-
-
-def _rubric_export(repo: "RubricRepository", rubric_id: str, output_path: Path) -> None:
-    """Export a rubric to JSON file."""
-    rubric = repo.load(rubric_id)
-    if not rubric:
-        console.print(f"[red]Rubric not found: {rubric_id}[/red]")
-        raise SystemExit(1)
-
-    output_path = Path(output_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    import json
-
-    with open(output_path, "w") as f:
-        json.dump(rubric.to_dict(), f, indent=2, default=str)
-
-    console.print(
-        f"\n[green]✓[/green] Exported rubric to: [bold]{output_path}[/bold]\n"
-    )
-
-
-def _rubric_delete(repo: "RubricRepository", rubric_id: str) -> None:
-    """Delete a custom rubric."""
-    if not repo.load(rubric_id):
-        console.print(f"[red]Rubric not found: {rubric_id}[/red]")
-        raise SystemExit(1)
-
-    confirm = input(f"Delete rubric {rubric_id}? [y/N] ").strip().lower() in ("y", "yes")
-    if not confirm:
-        console.print("[dim]Cancelled[/dim]")
-        return
-
-    repo.delete(rubric_id)
-    console.print(f"\n[green]✓[/green] Deleted rubric: {rubric_id}\n")
-
-
-def _generate_grading_feedback(
-    rubric: Any,
-    analysis_data: dict[str, Any],
-    audience: str | None = None,
-    detail: str | None = None,
-    api_provider: str | None = None,
-    api_model: str | None = None,
-) -> str:
-    """
-    Generate grading feedback using LLM.
-
-    Args:
-        rubric: Rubric object to use for grading
-        analysis_data: Analysis data to include in the prompt
-        audience: Target audience (student or teacher). Default: student
-        detail: Level of detail (short, summary, long). Default: summary
-        api_provider: API provider to use (anthropic, openai, google, openrouter)
-        api_model: API model to use
-
-    Returns:
-        Generated feedback text
-
-    Raises:
-        SystemExit: If API key not found or LLM call fails
-    """
-    from video_analyser.utils.api_keys import get_api_key
-
-    # Apply defaults
-    audience = audience or "student"
-    detail = detail or "summary"
-
-    # Determine API provider
-    if api_provider:
-        provider: str = api_provider
-    else:
-        # Try to auto-detect from config
-        config = get_config()
-        api_settings = getattr(config, "api_settings", {})
-        if isinstance(api_settings, dict):
-            provider = str(api_settings.get("default_provider", "anthropic"))  # type: ignore[arg-type]
-        else:
-            provider = str(getattr(api_settings, "default_provider", "anthropic"))  # type: ignore[arg-type]
-
-    api_key = get_api_key(provider)  # type: ignore[arg-type]
-    if not api_key:
-        console.print(
-            f"[red]✗ No API key found for {provider}[/red]\n"
-            f"[dim]Set {provider.upper()}_API_KEY environment variable[/dim]"
-        )
-        raise SystemExit(1)
-
-    # Build prompt for LLM
-    prompt = _build_grading_prompt(rubric, analysis_data, audience, detail)
-
-    # Call appropriate LLM
-    feedback_text: str = ""
-    provider_lower = provider.lower()
-    assert isinstance(provider_lower, str)  # For type checker
-    if provider_lower == "anthropic":
-        from anthropic import Anthropic  # type: ignore[import-not-found]
-
-        client = Anthropic(api_key=api_key)  # type: ignore[attr-defined]
-        response = client.messages.create(  # type: ignore[attr-defined]
-            model=api_model or "claude-haiku-4-5-20251001",
-            max_tokens=4096,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        if response.content:  # type: ignore[attr-defined]
-            content_block = response.content[0]  # type: ignore[attr-defined]
-            if hasattr(content_block, "text"):  # type: ignore[arg-type]
-                feedback_text = content_block.text  # type: ignore[attr-defined]
-
-    elif provider_lower == "openai":
-        from openai import OpenAI  # type: ignore[import-not-found]
-
-        client = OpenAI(api_key=api_key)  # type: ignore[attr-defined]
-        response = client.chat.completions.create(  # type: ignore[attr-defined]
-            model=api_model or "gpt-4o",
-            max_tokens=4096,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        if response.choices and response.choices[0].message.content:  # type: ignore[attr-defined]
-            feedback_text = response.choices[0].message.content  # type: ignore[attr-defined]
-
-    elif provider_lower == "google":
-        import google.generativeai as genai  # type: ignore[import-not-found]
-
-        genai.configure(api_key=api_key)  # type: ignore[attr-defined]
-        model = genai.GenerativeModel(api_model or "gemini-2.0-flash")  # type: ignore[attr-defined]
-        response = model.generate_content(prompt)  # type: ignore[attr-defined]
-        if response.text:  # type: ignore[attr-defined]
-            feedback_text = response.text  # type: ignore[attr-defined]
-
-    if not feedback_text:
-        console.print("[red]✗ Failed to generate feedback[/red]")
-        raise SystemExit(1)
-
-    # Validate and ensure scoring is included for short feedback
-    if detail == "short":
-        feedback_text = _ensure_score_in_feedback(feedback_text, rubric, analysis_data)
-
-    return feedback_text  # type: ignore[return-value]
-
-
-def _ensure_score_in_feedback(
-    feedback_text: str, rubric: Any, analysis_data: dict[str, Any]
-) -> str:
-    """
-    Ensure feedback includes a valid score, adding one if missing.
-
-    Args:
-        feedback_text: The LLM response text
-        rubric: The rubric object for fallback scoring
-        analysis_data: Analysis data for fallback scoring
-
-    Returns:
-        Feedback text with guaranteed score inclusion
-    """
-    import re
-
-    # Check if score is already present in expected format
-    score_pattern = r"Score:\s*(\d{1,3})/100"
-    match = re.search(score_pattern, feedback_text, re.IGNORECASE)
-
-    if match:
-        score = int(match.group(1))
-        if 1 <= score <= 100:
-            return feedback_text  # Score is valid and present
-
-    # Score is missing or invalid - add fallback score
-    fallback_score = _calculate_fallback_score(rubric, analysis_data)
-
-    # If feedback already starts with content, prepend the score
-    if not feedback_text.strip().startswith("Score:"):
-        feedback_text = f"Score: {fallback_score}/100\n\n{feedback_text}"
-
-    return feedback_text
-
-
-def _generate_all_feedback_formats(
-    rubric: Any,
-    analysis_data: dict[str, Any],
-    audience: str | None,
-    output_path: Path,
-    api_provider: str | None = None,
-    api_model: str | None = None,
-) -> None:
-    """
-    Generate feedback in all formats and save to separate files.
-
-    Args:
-        rubric: The rubric object
-        analysis_data: Analysis data dictionary
-        audience: Target audience (student/teacher)
-        output_path: Directory to save feedback files
-        api_provider: API provider for LLM
-        api_model: API model for LLM
-    """
-    timestamp = time.strftime("%Y%m%d_%H%M%S")
-
-    # Define all feedback formats
-    formats = [
-        ("short", "Minimal feedback with score and two sentences"),
-        ("summary", "Structured feedback with strengths and improvements"),
-        ("long", "Comprehensive detailed feedback"),
-    ]
-
-    for detail, description in formats:
-        console.print(f"[dim]Generating {detail} feedback...[/dim]")
-
-        feedback_text = _generate_grading_feedback(
-            rubric=rubric,
-            analysis_data=analysis_data,
-            audience=audience,
-            detail=detail,
-            api_provider=api_provider,
-            api_model=api_model,
-        )
-
-        # Save to separate file
-        filename = f"feedback_{detail}_{timestamp}.md"
-        feedback_file = output_path / filename
-
-        with open(feedback_file, "w") as f:
-            f.write(f"# Presentation Feedback Report - {detail.title()} Format\n\n")
-            f.write(f"**Format:** {description}\n\n")
-            f.write("---\n\n")
-            f.write(feedback_text)
-            f.write("\n\n---\n\n")
-            f.write(f"*Generated on: {time.strftime('%Y-%m-%d %H:%M:%S')}*\n")
-
-        console.print(f"[green]✓[/green] Saved {detail} feedback to {filename}")
-
-
 def _get_cache_key(video_path: Path) -> str:
     """Generate a cache key for a video file."""
     with open(video_path, "rb") as f:
@@ -907,7 +377,7 @@ def _load_cached_result(cache_path: Path) -> dict[str, Any] | None:
         return None
 
     try:
-        with open(cache_path, "r") as f:
+        with open(cache_path) as f:
             cached_data = json.load(f)
         # Check if cache is recent (within 24 hours)
         if time.time() - cached_data.get("timestamp", 0) < 24 * 3600:
@@ -1011,7 +481,10 @@ def _run_transcription_only(
 
 
 def _run_visual_analysis_only(
-    video_path: Path, output_dir: Path, config: VideoAnalyserConfig, logger: logging.Logger
+    video_path: Path,
+    output_dir: Path,
+    config: VideoAnalyserConfig,
+    logger: logging.Logger,
 ) -> dict[str, Any]:
     """Run only visual analysis."""
     # This would need to be extracted from the pipeline coordinator
@@ -1019,177 +492,6 @@ def _run_visual_analysis_only(
     logger.info("Running visual analysis...")
     time.sleep(2)  # Placeholder for actual visual analysis
     return {"visual_analysis": "completed", "frames_processed": 15}
-
-
-def _calculate_fallback_score(rubric: Any, analysis_data: dict[str, Any]) -> int:
-    """
-    Calculate a fallback score based on analysis data quality.
-
-    This uses a balanced heuristic that can result in both high and low scores.
-
-    Args:
-        rubric: The rubric object for fallback scoring
-        analysis_data: Analysis data dictionary
-
-    Returns:
-        Fallback score from 1-100
-    """
-    # Start with a modest baseline - assumes basic competence
-    score = 35
-
-    # POSITIVE FACTORS (+ points)
-    # Content quality indicators
-    if analysis_data.get("speech_analysis"):
-        score += 20  # Strong evidence of developed content
-
-    if analysis_data.get("visual_analysis"):
-        score += 15  # Professional presentation quality
-
-    # Video technical quality
-    video_info = analysis_data.get("video_info", {})
-    if video_info.get("duration", 0) > 120:  # Substantial content
-        score += 10
-    elif video_info.get("duration", 0) > 60:  # Decent length
-        score += 5
-
-    if video_info.get("fps", 0) > 30:  # High quality video
-        score += 8
-    elif video_info.get("fps", 0) > 24:  # Good quality video
-        score += 5
-
-    # Processing complexity (longer analysis suggests richer content)
-    processing_time = analysis_data.get("processing_time", 0)
-    if processing_time > 60:  # Very complex analysis
-        score += 10
-    elif processing_time > 30:  # Moderately complex
-        score += 5
-
-    # NEGATIVE FACTORS (- points)
-    # Poor quality indicators
-    if video_info.get("duration", 0) < 30:  # Very short presentation
-        score -= 15
-
-    if video_info.get("fps", 0) < 15:  # Poor video quality
-        score -= 10
-
-    if not analysis_data.get("speech_analysis") and not analysis_data.get(
-        "visual_analysis"
-    ):
-        score -= 20  # No meaningful analysis data suggests poor quality
-
-    # Ensure score stays within realistic bounds
-    return max(1, min(100, score))
-
-
-def _build_grading_prompt(
-    rubric: Any,
-    analysis_data: dict[str, Any],
-    audience: str = "student",
-    detail: str = "summary",
-) -> str:  # type: ignore[return]
-    """Build the prompt for LLM grading.
-
-    Args:
-        rubric: Rubric object with categories, criteria, and scoring scale
-        analysis_data: Analysis data dictionary to include in prompt
-        audience: Target audience ('student' or 'teacher')
-        detail: Level of detail ('short', 'summary', or 'long')
-
-    Returns:
-        Formatted prompt string for LLM evaluation
-    """
-    import json
-
-    rubric_name = str(rubric.name)  # type: ignore[attr-defined]
-    rubric_desc = str(rubric.description or "")  # type: ignore[attr-defined]
-
-    # Build audience-specific instruction
-    if audience == "teacher":
-        system_instruction = (
-            "You are an expert presentation evaluator providing detailed assessment feedback for educators. "
-            "Focus on rubric-based scoring, assessment findings, and areas for student development."
-        )
-    else:  # student
-        system_instruction = (
-            "You are a supportive presentation coach providing encouraging, developmental feedback to a student. "
-            "Focus on growth, strengths, and specific, actionable areas for improvement."
-        )
-
-    prompt: str = (
-        system_instruction
-        + "\n\nPlease evaluate the following presentation based on the provided rubric.\n\n"
-    )
-    prompt += "## Rubric: " + rubric_name + "\n" + rubric_desc + "\n\n"
-    prompt += "### Rubric Categories and Criteria:\n"
-
-    for category in rubric.categories:  # type: ignore[union-attr]
-        cat_name = str(category.name)  # type: ignore[attr-defined]
-        cat_weight = str(category.weight)  # type: ignore[attr-defined]
-        cat_desc = str(category.description or "")  # type: ignore[attr-defined]
-        prompt += "\n**" + cat_name + "** (weight: " + cat_weight + ")\n"
-        prompt += cat_desc + "\n\n"
-        for criterion in category.criteria:  # type: ignore[union-attr]
-            crit_name = str(criterion.name)  # type: ignore[attr-defined]
-            crit_desc = str(criterion.description or "")  # type: ignore[attr-defined]
-            prompt += "- " + crit_name + ": " + crit_desc + "\n"
-            if criterion.scoring_guide:  # type: ignore[union-attr]
-                guide = str(criterion.scoring_guide)  # type: ignore[attr-defined]
-                prompt += "  Scoring guide: " + guide + "\n"
-
-    prompt += "\n### Scoring Scale:\n"
-    scoring_items: list[tuple[Any, Any]] = sorted(rubric.scoring_scale.labels.items())  # type: ignore[union-attr]
-    for score, label in scoring_items:
-        prompt += "- " + str(score) + ": " + str(label) + "\n"
-
-    max_score = str(rubric.scoring_scale.max_score)  # type: ignore[union-attr]
-    analysis_json = json.dumps(analysis_data, indent=2, default=str)
-
-    # Build closing section based on detail level and audience
-    closing = "\n\nPlease provide:\n"
-
-    if detail == "short":
-        # Short: minimal feedback - overall score + two sentences
-        if audience == "teacher":
-            closing += "REQUIRED FORMAT: Start with 'Score: X/100' where X is a number from 1-100 based on holistic rubric evaluation. Then provide exactly two sentences: one summarizing key strengths, and one identifying main areas for improvement.\n"
-        else:  # student
-            closing += "REQUIRED FORMAT: Start with 'Score: X/100' where X is a number from 1-100 based on holistic rubric evaluation. Then provide exactly two sentences: one highlighting what you did well, and one suggesting specific areas to improve.\n"
-    elif detail == "summary":
-        # Summary: 2 paragraphs (strengths + improvements)
-        if audience == "teacher":
-            closing += "1. Overall assessment with detailed scores for each rubric criterion in format 'Criterion Name: X/100' (1-100 scale)\n"
-            closing += "2. Key strengths demonstrated\n"
-            closing += "3. Areas for student improvement\n"
-        else:  # student
-            closing += "1. What you did well (strengths)\n"
-            closing += "2. Specific areas to work on for next time\n"
-    else:  # long
-        # Long: full detailed feedback (original behavior)
-        if audience == "teacher":
-            closing += "1. Overall assessment\n"
-            closing += "2. Detailed scores for each criterion (1-" + max_score + ")\n"
-            closing += "3. Specific feedback for each category\n"
-            closing += "4. Key strengths\n"
-            closing += "5. Areas for improvement\n"
-            closing += "6. Recommendations for student development\n"
-        else:  # student
-            closing += "1. Overall assessment\n"
-            closing += "2. Scores for each criterion (1-" + max_score + ")\n"
-            closing += "3. What you did well\n"
-            closing += "4. What to focus on next time\n"
-            closing += "5. Specific tips for improvement\n"
-            closing += "6. Next steps for growth\n"
-
-    closing += "\nFormat the response clearly."
-    if detail != "short":
-        closing += " Use sections for each category."
-
-    prompt_end: str = "\n\n### Presentation Analysis Data:\n```json\n"
-    prompt_end += analysis_json
-    prompt_end += "\n```"
-    prompt_end += closing
-
-    result: str = prompt + prompt_end  # type: ignore[assignment]
-    return result
 
 
 def main() -> None:
@@ -1215,43 +517,56 @@ def main() -> None:
     # Video-specific subcommands beyond the contract.
     if argv and argv[0] == "config":
         p = argparse.ArgumentParser(prog="video-analyser config")
-        p.add_argument("--all", action="store_true", help="Show all configuration options")
-        p.add_argument("--config", "-c", type=Path, default=None, help="Configuration file path")
+        p.add_argument(
+            "--all", action="store_true", help="Show all configuration options"
+        )
+        p.add_argument(
+            "--config", "-c", type=Path, default=None, help="Configuration file path"
+        )
         _cmd_config(p.parse_args(argv[1:]))
-        return
-    if argv and argv[0] == "rubric":
-        p = argparse.ArgumentParser(prog="video-analyser rubric")
-        p.add_argument("action", help="list, show, create, export, delete")
-        p.add_argument("--type", "-t", default=None, help="Rubric type")
-        p.add_argument("--id", "-i", default=None, help="Rubric ID (show/delete)")
-        p.add_argument("--output", "-o", type=Path, default=None, help="Output file path (export)")
-        p.add_argument("--dir", "-d", type=Path, default=Path("rubrics"), help="Rubric storage directory")
-        _cmd_rubric(p.parse_args(argv[1:]))
         return
 
     # Default (bare positional) command: analyse a video.
     p = argparse.ArgumentParser(
         prog="video-analyser",
         description="Analyse a video file for presentation feedback",
-        epilog="subcommands: `serve`, `manifest`, `config`, `rubric` (run each with -h)",
+        epilog="subcommands: `serve`, `manifest`, `config` (run each with -h)",
     )
-    p.add_argument("--version", action="version", version=_pkg_version("video-analyser"))
+    p.add_argument(
+        "--version", action="version", version=_pkg_version("video-analyser")
+    )
     p.add_argument("video_path", type=Path, help="Path to the video file to analyse")
-    p.add_argument("--output", "-o", type=Path, default=None, help="Output directory for reports")
-    p.add_argument("--config", "-c", type=Path, default=None, help="Configuration file path")
+    p.add_argument(
+        "--output", "-o", type=Path, default=None, help="Output directory for reports"
+    )
+    p.add_argument(
+        "--config", "-c", type=Path, default=None, help="Configuration file path"
+    )
     p.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
-    p.add_argument("--api-provider", dest="api_provider", default=None, help="API provider for captioning/grading")
+    p.add_argument(
+        "--api-provider",
+        dest="api_provider",
+        default=None,
+        help="API provider for captioning",
+    )
     p.add_argument("--api-model", dest="api_model", default=None, help="API model")
-    p.add_argument("--use-api", dest="use_api", action="store_true", help="Use API for captioning")
-    p.add_argument("--grade", "-g", action="store_true", help="Enable LLM grading feedback")
-    p.add_argument("--rubric-type", "-t", dest="rubric_type", default=None, help="Rubric type for grading")
-    p.add_argument("--rubric-file", "-r", dest="rubric_file", type=Path, default=None, help="Custom rubric JSON for grading")
-    p.add_argument("--feedback-audience", dest="feedback_audience", default=None, help="student | teacher")
-    p.add_argument("--feedback-detail", dest="feedback_detail", default=None, help="short | summary | long")
-    p.add_argument("--save-all-formats", dest="save_all_formats", action="store_true", help="Save all feedback formats")
-    p.add_argument("--fast", action="store_true", help="Fast mode: transcript only (skip visual analysis)")
-    p.add_argument("--no-parallel", dest="parallel", action="store_false", help="Disable parallel processing")
-    p.add_argument("--no-cache", dest="cache", action="store_false", help="Disable caching")
+    p.add_argument(
+        "--use-api", dest="use_api", action="store_true", help="Use API for captioning"
+    )
+    p.add_argument(
+        "--fast",
+        action="store_true",
+        help="Fast mode: transcript only (skip visual analysis)",
+    )
+    p.add_argument(
+        "--no-parallel",
+        dest="parallel",
+        action="store_false",
+        help="Disable parallel processing",
+    )
+    p.add_argument(
+        "--no-cache", dest="cache", action="store_false", help="Disable caching"
+    )
     _cmd_analyse(p.parse_args(argv))
 
 
