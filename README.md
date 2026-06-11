@@ -12,6 +12,12 @@ Part of the [analyser family](https://github.com/michael-borck/lens-analysers).
 
 A video analysis engine that extracts signals from presentations — speech transcription, delivery metrics, scene detection, and visual analysis — as structured JSON. (Rubric grading / assessment is intentionally *not* here: it's assessment-aware, so it lives in a lens above the analysers, not in this signal generator.)
 
+> **Migrating from `--grade` (≤0.9.x)?** Rubric-based assessment moved to
+> [`assessment-lens`](https://github.com/michael-borck/assessment-lens)
+> (`pip install assessment-lens`), which maps signals from this analyser (and the
+> rest of the family) to a rubric as **observations, not grades** — a human
+> assigns every mark. video-analyser 0.10.0 is signal-only.
+
 > **Status**: Phase 1 MVP in development. Core infrastructure complete, video processing pipeline in progress.
 
 ## Features
