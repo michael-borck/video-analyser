@@ -71,9 +71,13 @@ dependencies = [
 # the published wheel (the PyPI pin remains).
 [tool.uv.sources]
 lens-contract = { path = "../lens-contract", editable = true }
+lens-embed = { path = "../lens-embed", editable = true }
 speech-analyser = { path = "../speech-analyser", editable = true }
 
 [project.optional-dependencies]
+embeddings = [
+    "lens-embed[text]>=0.1.1",
+]
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",

@@ -24,6 +24,7 @@ from video_analyser.core.progress_tracker import (
     ProgressTracker,
 )
 from video_analyser.core.scene_detector import Scene, SceneDetectionResult, SceneDetector
+from video_analyser.embedding import embed_document
 from video_analyser.core.video_processor import FrameInfo, VideoInfo, VideoProcessor
 from video_analyser.reports.html_renderer import HTMLRenderer
 from video_analyser.reports.report_generator import ReportGenerator
@@ -681,6 +682,8 @@ class PipelineCoordinator:
             except Exception as exc:  # noqa: BLE001
                 errors.append(f"visual analysis failed: {exc}")
 
+        embedding = embed_document(transcription.text) if transcription else None
+
         return VideoAnalysis(
             input=str(video_path),
             video_info=result.video_info,
@@ -692,6 +695,7 @@ class PipelineCoordinator:
             processing_time=time.time() - start,
             success=True,
             errors=errors,
+            embedding=embedding,
         )
 
     def generate_reports(

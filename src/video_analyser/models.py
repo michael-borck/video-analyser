@@ -36,3 +36,7 @@ class VideoAnalysis(BaseModel):
     processing_time: float = 0.0
     success: bool = True
     errors: list[str] = []
+    # Pooled, L2-normalised transcript vector from lens-embed (pinned
+    # all-MiniLM-L6-v2). Comparable across members; None unless [embeddings]
+    # installed or there's no transcript.
+    embedding: list[float] | None = None
