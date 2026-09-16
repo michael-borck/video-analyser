@@ -32,6 +32,7 @@ def _cmd_analyse(args) -> None:
     fast_mode = args.fast
     parallel_processing = args.parallel
     use_cache = args.cache
+    as_json = getattr(args, "json", False)
 
     # Load configuration
     config = load_config(config_file) if config_file else get_config()
@@ -49,6 +50,16 @@ def _cmd_analyse(args) -> None:
     if verbose:
         logging.basicConfig(level=logging.DEBUG)
     logger.info("Starting Video Analyser analysis")
+
+    # Contract mode prints ONLY the JSON payload on stdout — it must run before
+    # any rich console output, which would corrupt the stream for auto-analyser.
+    if as_json:
+        _analyze_video_json(
+            video_path=video_path,
+            config=config,
+            logger=logger,
+        )
+        return
 
     console.print(
         Panel.fit(
@@ -79,6 +90,77 @@ def _cmd_analyse(args) -> None:
         parallel_processing=parallel_processing,
         use_cache=use_cache,
     )
+
+
+def _plain(obj: Any) -> Any:
+    """Pydantic model → JSON-safe dict (contract payload helper)."""
+    dump = getattr(obj, "model_dump", None)
+    return dump(mode="json") if dump else obj
+
+
+def _analyze_video_json(
+    video_path: Path,
+    config: VideoAnalyserConfig,
+    logger: logging.Logger = None,
+) -> None:
+    """
+    Family-contract mode (`--json`): print exactly one JSON object on stdout.
+
+    auto-analyser invokes members as `<command> <file> --json` and parses stdout,
+    so all console chatter is redirected to stderr and no report files are
+    written. Transcript-only (fast) — visual captioning is not part of the
+    contract payload.
+    """
+    import contextlib
+    import json as _json
+    import tempfile
+
+    video_path_obj = Path(video_path)
+    if not video_path_obj.exists() or not video_path_obj.is_file():
+        print(f"video not found: {video_path}", file=sys.stderr)
+        sys.exit(1)
+
+    with contextlib.redirect_stdout(sys.stderr):
+        logger.info(f"json contract analysis: {video_path_obj}")
+        pipeline = PipelineCoordinator(
+            config=config, progress_tracker=CLIProgressTracker()
+        )
+        work = Path(tempfile.mkdtemp(prefix="video-analyser-json-"))
+        result = pipeline.analyze_video(
+            video_path=video_path_obj,
+            extract_audio=True,
+            detect_scenes=True,
+            extract_frames=True,
+            output_dir=work,
+        )
+        if not result.success:
+            print(result.error_message or "video analysis failed", file=sys.stderr)
+            sys.exit(1)
+
+        speech_analysis: dict[str, Any] | None = None
+        if result.audio_info:
+            try:
+                speech_analysis = pipeline.analyze_speech(
+                    audio_path=result.audio_info.file_path,
+                    scene_result=result.scene_result,
+                )
+            except Exception as e:  # transcript is optional in the payload
+                logger.warning(f"speech analysis failed: {e}")
+
+        payload: dict[str, Any] = {
+            "file": video_path_obj.name,
+            "video": {
+                "duration": result.video_info.duration,
+                "width": result.video_info.width,
+                "height": result.video_info.height,
+                "fps": result.video_info.fps,
+            },
+            "scenes": _plain(result.scene_result),
+            "speech": speech_analysis,
+        }
+
+    _json.dump(payload, sys.stdout, default=str)
+    sys.stdout.write("\n")
 
 
 def _analyze_video_cli(
@@ -566,6 +648,13 @@ def main() -> None:
     )
     p.add_argument(
         "--no-cache", dest="cache", action="store_false", help="Disable caching"
+    )
+    p.add_argument(
+        "--json",
+        action="store_true",
+        help="Print the analysis as a single JSON object on stdout (the family "
+        "contract auto-analyser uses: `<command> <file> --json`); everything "
+        "else goes to stderr and reports are not written",
     )
     _cmd_analyse(p.parse_args(argv))
 
