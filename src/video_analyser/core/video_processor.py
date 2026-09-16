@@ -26,6 +26,14 @@ from video_analyser.utils.config import get_config
 
 logger = logging.getLogger(__name__)
 
+# Frame-quality heuristics (ported from video-to-guide's extractor): sample
+# candidate timestamps per scene and keep the sharpest, then drop perceptually
+# near-identical frames. Screen recordings are mostly static — without dedupe
+# the downstream captioning/OCR spends most of its compute on duplicates.
+_SHARPNESS_SAMPLES = 6
+_SHARPNESS_PROBE_WIDTH = 256
+_DEDUPE_THRESHOLD = 8  # max hamming distance between 64-bit dHashes
+
 
 class VideoInfo(BaseModel):
     """Video metadata information."""
@@ -342,6 +350,7 @@ class VideoProcessor:
         scene_number: int,
         output_dir: Path | str | None = None,
         progress_callback: Callable[[float], None] | None = None,
+        timestamp_hint: float | None = None,
     ) -> FrameInfo:
         """
         Extract a representative frame from a scene with comprehensive error handling.
@@ -353,6 +362,8 @@ class VideoProcessor:
             scene_number: Scene number for naming
             output_dir: Optional custom output directory for frame
             progress_callback: Optional callback function for progress updates
+            timestamp_hint: Optional pre-computed representative timestamp
+                (e.g. from sharpness sampling); defaults to the scene midpoint
 
         Returns:
             FrameInfo object with extracted frame metadata
@@ -399,8 +410,8 @@ class VideoProcessor:
                 details={"error_code": ErrorCode.INSUFFICIENT_DISK_SPACE.value},
             )
 
-        # Use middle of scene as representative timestamp
-        timestamp = scene_start + (scene_end - scene_start) / 2
+        # Representative timestamp: sharpness-sampled when available, else midpoint
+        timestamp = timestamp_hint or scene_start + (scene_end - scene_start) / 2
 
         # Create output filename
         output_filename = f"scene_{scene_number:03d}_frame_{timestamp:.2f}s.jpg"
@@ -546,36 +557,142 @@ class VideoProcessor:
 
         logger.info(f"Extracting frames from {len(scenes)} scenes")
 
+        # One capture for all scenes: per scene, sample candidate timestamps and
+        # remember the sharpest so ffmpeg extracts a representative frame rather
+        # than an arbitrary midpoint.
+        cap = None
+        try:
+            import cv2
+
+            cap = cv2.VideoCapture(str(video_info.file_path))
+        except Exception as e:  # pragma: no cover - cv2 is a hard dep; belt & braces
+            logger.warning(f"cv2 capture unavailable ({e}); falling back to midpoints")
+
         extracted_frames = []
         total_scenes = len(scenes)
 
-        for i, (start_time, end_time, scene_number) in enumerate(scenes):
-            try:
-                # Extract frame from this scene
-                frame_info = self.extract_frame_from_scene(
-                    video_info,
-                    start_time,
-                    end_time,
-                    scene_number,
-                    output_dir,
-                    None,  # Don't pass progress callback to individual extractions
-                )
-                extracted_frames.append(frame_info)
+        try:
+            for i, (start_time, end_time, scene_number) in enumerate(scenes):
+                try:
+                    hint = (
+                        self._sharpest_timestamp(cap, start_time, end_time)
+                        if cap
+                        else None
+                    )
+                    # Extract frame from this scene
+                    frame_info = self.extract_frame_from_scene(
+                        video_info,
+                        start_time,
+                        end_time,
+                        scene_number,
+                        output_dir,
+                        None,  # Don't pass progress callback to individual extractions
+                        timestamp_hint=hint,
+                    )
+                    extracted_frames.append(frame_info)
 
-                # Update overall progress
-                if progress_callback:
-                    progress = (i + 1) / total_scenes
-                    progress_callback(progress)
+                    # Update overall progress
+                    if progress_callback:
+                        progress = (i + 1) / total_scenes
+                        progress_callback(progress)
 
-            except Exception as e:
-                logger.error(f"Failed to extract frame from scene {scene_number}: {e}")
-                # Continue with other scenes rather than failing completely
-                continue
+                except Exception as e:
+                    logger.error(
+                        f"Failed to extract frame from scene {scene_number}: {e}"
+                    )
+                    # Continue with other scenes rather than failing completely
+                    continue
+        finally:
+            if cap is not None:
+                cap.release()
+
+        frames_before = len(extracted_frames)
+        extracted_frames = self._dedupe_frames(extracted_frames)
 
         logger.info(
-            f"Successfully extracted {len(extracted_frames)} frames from {total_scenes} scenes"
+            f"Extracted {frames_before} frames from {total_scenes} scenes; "
+            f"{len(extracted_frames)} kept after near-duplicate removal"
         )
         return extracted_frames
+
+    def _sharpest_timestamp(
+        self, cap: Any, scene_start: float, scene_end: float
+    ) -> float | None:
+        """Sample the scene and return the sharpest frame's timestamp (or None).
+
+        Sharpness = variance of the Laplacian on a downscaled grayscale probe —
+        blurry/transitional frames score low, crisp UI frames score high.
+        """
+        try:
+            import cv2
+
+            fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+            duration = max(0.0, scene_end - scene_start)
+            if duration <= 0:
+                return None
+            best_t: float | None = None
+            best_score = -1.0
+            for k in range(_SHARPNESS_SAMPLES):
+                t = scene_start + duration * (k + 0.5) / _SHARPNESS_SAMPLES
+                cap.set(cv2.CAP_PROP_POS_FRAMES, int(t * fps))
+                ok, frame = cap.read()
+                if not ok or frame is None:
+                    continue
+                height, width = frame.shape[:2]
+                scale = _SHARPNESS_PROBE_WIDTH / max(1, width)
+                small = cv2.resize(
+                    frame, (_SHARPNESS_PROBE_WIDTH, max(1, int(height * scale)))
+                )
+                gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
+                score = cv2.Laplacian(gray, cv2.CV_64F).var()
+                if score > best_score:
+                    best_score = score
+                    best_t = t
+            return best_t
+        except Exception as e:
+            logger.warning(f"sharpness sampling failed ({e}); using scene midpoint")
+            return None
+
+    def _dedupe_frames(self, frames: list[FrameInfo]) -> list[FrameInfo]:
+        """Drop frames perceptually near-identical to an earlier one (64-bit dHash)."""
+        try:
+            from PIL import Image
+        except Exception:  # pragma: no cover - Pillow is a hard dep; belt & braces
+            return frames
+
+        def dhash(path: Path) -> int:
+            with Image.open(path) as img:
+                small = img.convert("L").resize((9, 8))
+            px = list(small.getdata())
+            bits = 0
+            for row in range(8):
+                for col in range(8):
+                    bits = (bits << 1) | (
+                        1 if px[row * 9 + col] < px[row * 9 + col + 1] else 0
+                    )
+            return bits
+
+        kept: list[FrameInfo] = []
+        hashes: list[int] = []
+        for frame in frames:
+            try:
+                h = dhash(Path(frame.frame_path))
+            except Exception as e:
+                logger.warning(
+                    f"could not hash {frame.frame_path} ({e}); keeping frame"
+                )
+                kept.append(frame)
+                continue
+            if any(bin(h ^ prev).count("1") <= _DEDUPE_THRESHOLD for prev in hashes):
+                logger.info(f"dropping near-duplicate frame {frame.frame_path}")
+                try:
+                    Path(frame.frame_path).unlink(missing_ok=True)
+                except OSError as e:
+                    logger.warning(f"could not remove duplicate frame file: {e}")
+                continue
+            hashes.append(h)
+            kept.append(frame)
+        return kept
 
     def _get_quality_value(self) -> int:
         """
